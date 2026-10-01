@@ -22,4 +22,19 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="projetoMomentum.rc">
+      <Filter>Arquivos de Recurso</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resource\cenario_temp.png">
+      <Filter>Arquivos de Recurso</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

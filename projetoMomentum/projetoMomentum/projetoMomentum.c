@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <allegro5/allegro.h>
+#include <allegro5/allegro_image.h>
 
 int main() {
     // 1. Inicializa o núcleo do Allegro
@@ -9,9 +10,19 @@ int main() {
         return -1;
     }
 
+    if (!al_init_image_addons()) {
+        printf("Falha ao inicializar as imagens.");
+        return -1;
+    }
+
     // 2. Instala o driver do mouse
     if (!al_install_mouse()) {
         printf("Falha ao inicializar o mouse.\n");
+        return -1;
+    }
+
+    if (!al_install_keyboard()) { // inicializa o teclado
+        printf(stderr, "Falha ao inicializar o teclado.\n");
         return -1;
     }
 
@@ -22,8 +33,12 @@ int main() {
         return -1;
     }
 
-    // 4. Cria a janela do jogo (exemplo: 1280x720)
-    ALLEGRO_DISPLAY* display = al_create_display(1280, 720);
+    bool isFullWindowed = true;
+    al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW); // seta flag de fullscreen mode
+
+
+    // 4. Cria a janela do jogo
+    ALLEGRO_DISPLAY* display = al_create_display(1920, 1080);
     if (!display) {
         printf("Falha ao criar a janela.\n");
         al_destroy_timer(timer);
@@ -42,6 +57,7 @@ int main() {
     // Registra as três fontes de eventos na fila
     al_register_event_source(fila_eventos, al_get_display_event_source(display));
     al_register_event_source(fila_eventos, al_get_timer_event_source(timer));
+    al_register_event_source(fila_eventos, al_get_keyboard_event_source());
     al_register_event_source(fila_eventos, al_get_mouse_event_source());
 
     // 6. Configuração antes do loop principal
@@ -61,6 +77,22 @@ int main() {
             // Clicou no X da janela
             rodando = false;
         }
+
+        if (evento.type == ALLEGRO_EVENT_KEY_DOWN) // alternar minimizar/maximizar tela inteira
+        {
+            if (isFullWindowed && evento.keyboard.keycode == ALLEGRO_KEY_F11) { // minimiza
+                al_toggle_display_flag(display, ALLEGRO_FULLSCREEN_WINDOW, false);
+                al_toggle_display_flag(display, ALLEGRO_WINDOWED, true);
+                isFullWindowed = false;
+            }
+
+            else if (isFullWindowed == false && evento.keyboard.keycode == ALLEGRO_KEY_F11) { // maximiza
+                al_toggle_display_flag(display, ALLEGRO_FULLSCREEN_WINDOW, true);
+                al_toggle_display_flag(display, ALLEGRO_WINDOWED, false);
+                isFullWindowed = true;
+            }
+        }
+
         else if (evento.type == ALLEGRO_EVENT_TIMER) {
             // O timer disparou (momento de atualizar o frame)
             redesenhar = true;

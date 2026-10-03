@@ -10,7 +10,7 @@ int main() {
         return -1;
     }
 
-    if (!al_init_image_addons()) {
+    if (!al_init_image_addon()) {
         printf("Falha ao inicializar as imagens.");
         return -1;
     }
@@ -44,6 +44,9 @@ int main() {
         al_destroy_timer(timer);
         return -1;
     }
+
+    ALLEGRO_BITMAP* cenario = al_load_bitmap("assets/cenario/cenario_temp.png");
+    ALLEGRO_BITMAP* grua = al_load_bitmap("assets/sprites/grua_sem_elevador.png");
 
     // 5. Cria a fila que organiza os eventos (timer, mouse, janela)
     ALLEGRO_EVENT_QUEUE* fila_eventos = al_create_event_queue();
@@ -111,6 +114,11 @@ int main() {
         if (redesenhar && al_is_event_queue_empty(fila_eventos)) {
             // Pinta o fundo da tela de preto (R:0, G:0, B:0)
             al_clear_to_color(al_map_rgb(0, 0, 0));
+
+            // Desenha o cenario e o sprite da grua
+            al_draw_bitmap(cenario, 0, 0, 0);
+            al_draw_scaled_bitmap(grua, 0, 0, 500, 500, 250, 50, 1250, 1250, 0);
+
 
             // Joga as alterações para a tela visível
             al_flip_display();

@@ -58,17 +58,6 @@ int main() {
     ALLEGRO_BITMAP* carga20 = al_load_bitmap("assets/sprites/carga20.png");
     ALLEGRO_BITMAP* carga30 = al_load_bitmap("assets/sprites/carga30.png");
 
-    /*ALLEGRO_BITMAP* pesos[] = {peso1, peso2, peso3, peso5, peso10};
-    ALLEGRO_BITMAP* cargas[] = {carga5, carga10, carga20, carga30};
-
-    ALLEGRO_BITMAP* assets[] = {cenario, grua, elevador, pesos, cargas};
-    for (int i = 0; i <= 3; i++) {
-        if (!assets[i]) {
-            printf("Falha ao criar assets.\n");
-            return -1;
-        }
-    }*/
-
     // 5. Cria a fila que organiza os eventos (timer, mouse, janela)
     ALLEGRO_EVENT_QUEUE* fila_eventos = al_create_event_queue();
     if (!fila_eventos) {

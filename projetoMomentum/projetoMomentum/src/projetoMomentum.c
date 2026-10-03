@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
+#include <allegro5/allegro_primitives.h>
 
 int main() {
     // 1. Inicializa o núcleo do Allegro
@@ -9,6 +10,8 @@ int main() {
         printf("Falha ao inicializar o Allegro.\n");
         return -1;
     }
+
+    al_init_primitives_addon();
 
     if (!al_init_image_addon()) {
         printf("Falha ao inicializar as imagens.");
@@ -43,6 +46,54 @@ int main() {
         printf("Falha ao criar a janela.\n");
         al_destroy_timer(timer);
         return -1;
+    }
+
+    typedef struct Pino { // pinos contralança e lança
+        float startX;
+        float startY;
+        float endX;
+        float endY;
+    } Pino;
+
+    Pino slotsContraLanca[10];
+
+    slotsContraLanca[0].startX = 555;
+    slotsContraLanca[0].endX = 580;
+    // +5x de espaçamento entre os pesos
+    slotsContraLanca[1].startX = 585;
+    slotsContraLanca[1].endX = 610;
+    // +5x de espaçamento entre os pesos
+    slotsContraLanca[2].startX = 615;
+    slotsContraLanca[2].endX = 640;
+    // +5x de espaçamento entre os pesos
+    slotsContraLanca[3].startX = 645;
+    slotsContraLanca[3].endX = 670;
+    // +5x de espaçamento entre os pesos
+    slotsContraLanca[4].startX = 675;
+    slotsContraLanca[4].endX = 700;
+    // +5x de espaçamento entre os pesos
+    slotsContraLanca[5].startX = 705;
+    slotsContraLanca[5].endX = 730;
+    // +5x de espaçamento entre os pesos
+    slotsContraLanca[6].startX = 735;
+    slotsContraLanca[6].endX = 760;
+    // +5x de espaçamento entre os pesos
+    slotsContraLanca[7].startX = 765;
+    slotsContraLanca[7].endX = 790;
+    // +5x de espaçamento entre os pesos
+    slotsContraLanca[8].startX = 795;
+    slotsContraLanca[8].endX = 820;
+    // +5x de espaçamento entre os pesos
+    slotsContraLanca[9].startX = 825;
+    slotsContraLanca[9].endX = 850;
+
+    Pino slotsLanca[10];
+
+
+
+    for (int i = 0; i < 10; i++) {
+        slotsContraLanca[i].startY = 352.5;
+        slotsContraLanca[i].endY = 398.5;
     }
 
     ALLEGRO_BITMAP* cenario = al_load_bitmap("assets/cenario/cenario_temp.png");
@@ -128,9 +179,11 @@ int main() {
             // Desenha o cenario e o sprite da grua
             al_draw_bitmap(cenario, 0, 0, 0);
             al_draw_scaled_bitmap(grua, 0, 0, 500, 500, 250, 50, 1250, 1250, 0);
-            al_draw_scaled_bitmap(elevador, 0, 0, 250, 250, 962, 371, 625, 625, 0);
-            al_draw_scaled_bitmap(peso10, 0, 0, 32, 32, 530, 343, 80, 80, 0);
-            al_draw_scaled_bitmap(carga10, 0, 0, 32, 32, 1222, 868, 80, 80, 0);
+            al_draw_scaled_bitmap(elevador, 0, 0, 250, 250, 782, 371, 625, 625, 0); // startX + 30 para passar pro proximo slot
+            al_draw_filled_rectangle(555, 352.5, 580, 398.5, al_map_rgb(0, 0, 0));
+            al_draw_filled_rectangle(585, 352.5, 610, 398.5, al_map_rgb(0, 0, 0));
+            al_draw_scaled_bitmap(peso10, 0, 0, 32, 32, slotsContraLanca[3].startX - 25, slotsContraLanca[3].startY - 10, 80, 80, 0); //peso startX = pino startX - 25, peso startY = pino startY - 10
+            al_draw_scaled_bitmap(carga10, 0, 0, 32, 32, 1042, 868, 80, 80, 0); // startX + 30 para passar pro proximo slot junto do elevador
 
 
             // Joga as alterações para a tela visível

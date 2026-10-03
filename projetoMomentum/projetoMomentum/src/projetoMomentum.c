@@ -47,6 +47,16 @@ int main() {
 
     ALLEGRO_BITMAP* cenario = al_load_bitmap("assets/cenario/cenario_temp.png");
     ALLEGRO_BITMAP* grua = al_load_bitmap("assets/sprites/grua_sem_elevador.png");
+    ALLEGRO_BITMAP* elevador = al_load_bitmap("assets/sprites/elevador_grua.png");
+    ALLEGRO_BITMAP* peso1 = al_load_bitmap("assets/sprites/peso_grua_1.png");
+    ALLEGRO_BITMAP* peso2 = al_load_bitmap("assets/sprites/peso_grua_2.png");
+    ALLEGRO_BITMAP* peso3 = al_load_bitmap("assets/sprites/peso_grua_3.png");
+    ALLEGRO_BITMAP* peso5 = al_load_bitmap("assets/sprites/peso_grua_5.png");
+    ALLEGRO_BITMAP* peso10 = al_load_bitmap("assets/sprites/peso_grua_10.png");
+    ALLEGRO_BITMAP* carga5 = al_load_bitmap("assets/sprites/carga5.png");
+    ALLEGRO_BITMAP* carga10 = al_load_bitmap("assets/sprites/carga10.png");
+    ALLEGRO_BITMAP* carga20 = al_load_bitmap("assets/sprites/carga20.png");
+    ALLEGRO_BITMAP* carga30 = al_load_bitmap("assets/sprites/carga30.png");
 
     // 5. Cria a fila que organiza os eventos (timer, mouse, janela)
     ALLEGRO_EVENT_QUEUE* fila_eventos = al_create_event_queue();
@@ -118,6 +128,9 @@ int main() {
             // Desenha o cenario e o sprite da grua
             al_draw_bitmap(cenario, 0, 0, 0);
             al_draw_scaled_bitmap(grua, 0, 0, 500, 500, 250, 50, 1250, 1250, 0);
+            al_draw_scaled_bitmap(elevador, 0, 0, 250, 250, 962, 371, 625, 625, 0);
+            al_draw_scaled_bitmap(peso10, 0, 0, 32, 32, 530, 343, 80, 80, 0);
+            al_draw_scaled_bitmap(carga10, 0, 0, 32, 32, 1222, 868, 80, 80, 0);
 
 
             // Joga as alterações para a tela visível

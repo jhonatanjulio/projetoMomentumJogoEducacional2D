@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -140,19 +140,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="projetoMomentum.c" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="resource.h" />
+    <ClCompile Include="src\projetoMomentum.c" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="projetoMomentum.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="resource\cenario_temp.png" />
+    <Image Include="assets\cenario\cenario_temp.png" />
+    <Image Include="assets\sprites\carga10.png" />
+    <Image Include="assets\sprites\carga20.png" />
+    <Image Include="assets\sprites\carga30.png" />
+    <Image Include="assets\sprites\carga5.png" />
+    <Image Include="assets\sprites\elevador_grua.png" />
+    <Image Include="assets\sprites\grua_sem_elevador.png" />
+    <Image Include="assets\sprites\peso_grua_1.png" />
+    <Image Include="assets\sprites\peso_grua_10.png" />
+    <Image Include="assets\sprites\peso_grua_2.png" />
+    <Image Include="assets\sprites\peso_grua_3.png" />
+    <Image Include="assets\sprites\peso_grua_5.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

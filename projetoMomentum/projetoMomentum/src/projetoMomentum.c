@@ -4,6 +4,71 @@
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
 
+typedef struct Fases {
+    int dificuldade; // de 1 a 3 (facil, medio, dificil);
+    float cargaX;
+    float cargaY;
+} Fases;
+
+typedef struct Pesos {
+    ALLEGRO_BITMAP* sprite;
+    float origemX;
+    float origemY;
+    float origemW;
+    float origemH;
+    float destinoX;
+    float destinoY;
+    float destinoW;
+    float destinoH;
+    float inventarioX; // Guarda a posição fixa X no chão
+    float inventarioY; // Guarda a posição fixa Y no chão
+    int carga;
+} Pesos;
+
+typedef struct Coordenadas { // struct padrão coordenadas
+    int pesoOcupante;
+    float comecoX;
+    float comecoY;
+    float fimX;
+    float fimY;
+    bool ocupado;
+} Coordenadas;
+
+int calcular_torque(Coordenadas slots[], int totalSlots, int pesoCarga, int distanciaCarga) {
+    double torqueContraLanca = 0.0;
+    double torqueLanca = 0.0;
+
+    // 1. Percorre os slots da contralança e soma o torque dos blocos encaixados
+    for (int i = 0; i < totalSlots; i++) {
+        if (slots[i].ocupado) {
+            int distancia = i + 1; // Posição física de 1 a N a partir do mastro
+            torqueContraLanca += (double)slots[i].pesoOcupante * distancia;
+        }
+    }
+
+    // 2. Calcula o torque fixo da carga na lança
+    torqueLanca = (double)pesoCarga * distanciaCarga;
+
+    printf("\n--- CALCULO DE TORQUE ---\n");
+    printf("Torque Contralanca (Esquerda): %.2f\n", torqueContraLanca);
+    printf("Torque Lanca (Direita)      : %.2f\n", torqueLanca);
+    printf("Diferenca (Sigma M)         : %.2f\n", torqueContraLanca - torqueLanca);
+
+    // 3. Avalia o veredito mecânico (RN05)
+    if (torqueContraLanca == torqueLanca) {
+        printf("Resultado: EQUILIBRIO PERFEITO!\n");
+        return 0;
+    }
+    else if (torqueContraLanca > torqueLanca) {
+        printf("Resultado: TOMBA PARA A ESQUERDA!\n");
+        return 1;
+    }
+    else {
+        printf("Resultado: TOMBA PARA A DIREITA!\n");
+        return -1;
+    }
+}
+
 int main() {
     // 1. Inicializa o núcleo do Allegro
     if (!al_init()) {
@@ -36,7 +101,7 @@ int main() {
         return -1;
     }
 
-    bool estaTelaCheia = true;
+    bool estaTelaCheia = false;
     al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW); // seta flag de fullscreen mode
 
 
@@ -47,33 +112,6 @@ int main() {
         al_destroy_timer(timer);
         return -1;
     }
-
-    typedef struct Fases {
-        int dificuldade; // de 1 a 3 (facil, medio, dificil);
-        float cargaX;
-        float cargaY;
-    } Fases;
-
-    typedef struct Pesos {
-        ALLEGRO_BITMAP* sprite;
-        float origemX;
-        float origemY;
-        float origemW;
-        float origemH;
-        float destinoX;
-        float destinoY;
-        float destinoW;
-        float destinoH;
-        int carga;
-    } Pesos;
-
-    typedef struct Coordenadas { // struct padrão coordenadas
-        float comecoX;
-        float comecoY;
-        float fimX;
-        float fimY;
-        bool ocupado;
-    } Coordenadas;
 
     Coordenadas slotsContraLanca[10];
 
@@ -121,6 +159,7 @@ int main() {
         slotsContraLanca[i].comecoY = 352.5;
         slotsContraLanca[i].fimY = 398.5;
         slotsContraLanca[i].ocupado = false;
+        slotsContraLanca[i].pesoOcupante = 0;
     }
 
     Coordenadas slotsLanca[10];
@@ -197,6 +236,22 @@ int main() {
     peso[4].sprite = al_load_bitmap("assets/sprites/peso_grua_10.png");
     peso[4].carga = 10;
 
+    // Distribui os 5 pesos lado a lado na base da tela (inventário)
+    for (int i = 0; i < 5; i++) {
+        peso[i].origemX = 0;
+        peso[i].origemY = 0;
+        peso[i].origemW = 32;
+        peso[i].origemH = 32;
+        peso[i].destinoW = 80;
+        peso[i].destinoH = 80;
+
+        peso[i].inventarioX = 100 + (i * 100); // Espaçados a cada 100 pixels
+        peso[i].inventarioY = 900;             // Altura do chão
+
+        peso[i].destinoX = peso[i].inventarioX;
+        peso[i].destinoY = peso[i].inventarioY;
+    }
+
     // altere o index do array pra mudar de slot (é para deixar em variável dinâmica no futuro)
     peso[4].destinoX = slotsContraLanca[3].comecoX - 25;
     peso[4].destinoY = slotsContraLanca[3].comecoY - 10;
@@ -234,6 +289,10 @@ int main() {
         carga[i].destinoH = 80;
     }
 
+    //Posição da Carga
+    carga[3].destinoX = 1042;
+    carga[3].destinoY = 868;
+
     // 5. Cria a fila que organiza os eventos (timer, mouse, janela)
     ALLEGRO_EVENT_QUEUE* fila_eventos = al_create_event_queue();
     if (!fila_eventos) {
@@ -252,6 +311,7 @@ int main() {
     // 6. Configuração antes do loop principal
     bool rodando = true;
     bool redesenhar = true;
+    int indice_arrastado = -1; // -1 indica que nenhum bloco está sendo segurado
 
     al_start_timer(timer);
 
@@ -274,11 +334,21 @@ int main() {
                 al_toggle_display_flag(display, ALLEGRO_WINDOWED, true);
                 estaTelaCheia = false;
             }
-
             else if (estaTelaCheia == false && evento.keyboard.keycode == ALLEGRO_KEY_F11) { // maximiza
                 al_toggle_display_flag(display, ALLEGRO_FULLSCREEN_WINDOW, true);
                 al_toggle_display_flag(display, ALLEGRO_WINDOWED, false);
                 estaTelaCheia = true;
+            }
+
+            // COLE O TESTE DA BARRA DE ESPAÇO AQUI DENTRO
+            if (evento.keyboard.keycode == ALLEGRO_KEY_SPACE) {
+                int cargaTeste = 20;
+                int distanciaCargaTeste = 3;
+
+                slotsContraLanca[1].ocupado = true;
+                slotsContraLanca[1].pesoOcupante = 30;
+
+                int veredito = calcular_torque(slotsContraLanca, 5, cargaTeste, distanciaCargaTeste);
             }
         }
 
@@ -286,13 +356,36 @@ int main() {
             // O timer disparou (momento de atualizar o frame)
             redesenhar = true;
         }
-        else if (evento.type == ALLEGRO_EVENT_MOUSE_AXES) {
-            // O mouse foi movido (visualize no console)
-            printf("Mouse moveu para: x=%d, y=%d\n", evento.mouse.x, evento.mouse.y);
-        }
         else if (evento.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
-            // Um botao do mouse foi clicado
-            printf("Clique no mouse! x=%d, y=%d\n", evento.mouse.x, evento.mouse.y);
+            // Tenta capturar um bloco apenas se as mãos estiverem livres
+            if (indice_arrastado == -1) {
+                for (int i = 0; i < 5; i++) {
+                    // Validação AABB (Colisão Ponto-Retângulo)
+                    if (evento.mouse.x >= peso[i].destinoX &&
+                        evento.mouse.x <= (peso[i].destinoX + peso[i].destinoW) &&
+                        evento.mouse.y >= peso[i].destinoY &&
+                        evento.mouse.y <= (peso[i].destinoY + peso[i].destinoH)) {
+
+                        indice_arrastado = i; // Fixa o bloco
+                        break;
+                    }
+                }
+            }
+        }
+        else if (evento.type == ALLEGRO_EVENT_MOUSE_AXES) {
+            // Move o bloco rastreado centralizando-o no cursor
+            if (indice_arrastado != -1) {
+                peso[indice_arrastado].destinoX = evento.mouse.x - (peso[indice_arrastado].destinoW / 2);
+                peso[indice_arrastado].destinoY = evento.mouse.y - (peso[indice_arrastado].destinoH / 2);
+            }
+        }
+        else if (evento.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
+            // Solta o bloco e força o retorno às coordenadas do inventário
+            if (indice_arrastado != -1) {
+                peso[indice_arrastado].destinoX = peso[indice_arrastado].inventarioX;
+                peso[indice_arrastado].destinoY = peso[indice_arrastado].inventarioY;
+                indice_arrastado = -1; // Libera as mãos
+            }
         }
 
         // 8. Etapa de Renderização (Desenho na tela)
@@ -309,15 +402,20 @@ int main() {
             al_draw_filled_rectangle(555, 352.5, 580, 398.5, al_map_rgb(0, 0, 0)); // rect temporario
             al_draw_filled_rectangle(585, 352.5, 610, 398.5, al_map_rgb(0, 0, 0)); // rect temporario
 
-            al_draw_scaled_bitmap(peso[4].sprite, peso[4].origemX, peso[4].origemY, peso[4].origemW, peso[4].origemH, peso[4].destinoX, peso[4].destinoY, peso[4].destinoW, peso[4].destinoH, 0); //peso comecoX = slot comecoX - 25, peso comecoY = slot comecoY - 10
-            al_draw_scaled_bitmap(carga[3].sprite, carga[3].origemX, carga[3].origemY, carga[3].origemW, carga[3].origemH, carga[3].destinoX, carga[3].destinoY, carga[3].destinoW, carga[3].destinoH, 0); // comecoX = 1042, +30x para passar pro proximo slot junto do elevador
-
+            // Desenha todos os blocos de contrapeso
+            for (int i = 0; i < 5; i++) {
+                al_draw_scaled_bitmap(peso[i].sprite, peso[i].origemX, peso[i].origemY,
+                    peso[i].origemW, peso[i].origemH,
+                    peso[i].destinoX, peso[i].destinoY,
+                    peso[i].destinoW, peso[i].destinoH, 0);
+            }
 
             // Joga as alterações para a tela visível
             al_flip_display();
 
             redesenhar = false;
         }
+
     }
 
     // 9. Encerramento: destroi as estruturas para não vazar memória (RNF02)

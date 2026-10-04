@@ -23,6 +23,7 @@ typedef struct Pesos {
     float inventarioX; // Guarda a posição fixa X no chão
     float inventarioY; // Guarda a posição fixa Y no chão
     int carga;
+    int slotAtual;     // -1 = está no inventário, senão é o índice do slot da contralança
 } Pesos;
 
 typedef struct Coordenadas { // struct padrão coordenadas
@@ -34,11 +35,17 @@ typedef struct Coordenadas { // struct padrão coordenadas
     bool ocupado;
 } Coordenadas;
 
+float anguloGrua = 0;            // angulo da grua em graus
+float anguloAlvo = 0;            // angulo para onde a grua tomba (esquerda negativo, direita positivo)
+float velocidadeAngularGrua = 0; // graus por frame
+float aceleracaoGrua = 0.03f;    // aceleracao em graus por frame ao quadrado
+int equilibrio = 0;
+
 int calcular_torque(Coordenadas slots[], int totalSlots, int pesoCarga, int distanciaCarga) {
     double torqueContraLanca = 0.0;
     double torqueLanca = 0.0;
 
-    // 1. Percorre os slots da contralança e soma o torque dos blocos encaixados
+    // Percorre os slots da contralança e soma o torque dos blocos encaixados
     for (int i = 0; i < totalSlots; i++) {
         if (slots[i].ocupado) {
             int distancia = i + 1; // Posição física de 1 a N a partir do mastro
@@ -46,7 +53,7 @@ int calcular_torque(Coordenadas slots[], int totalSlots, int pesoCarga, int dist
         }
     }
 
-    // 2. Calcula o torque fixo da carga na lança
+    // Calcula o torque fixo da carga na lança
     torqueLanca = (double)pesoCarga * distanciaCarga;
 
     printf("\n--- CALCULO DE TORQUE ---\n");
@@ -54,7 +61,7 @@ int calcular_torque(Coordenadas slots[], int totalSlots, int pesoCarga, int dist
     printf("Torque Lanca (Direita)      : %.2f\n", torqueLanca);
     printf("Diferenca (Sigma M)         : %.2f\n", torqueContraLanca - torqueLanca);
 
-    // 3. Avalia o veredito mecânico (RN05)
+    // Avalia o veredito mecânico (RN05)
     if (torqueContraLanca == torqueLanca) {
         printf("Resultado: EQUILIBRIO PERFEITO!\n");
         return 0;
@@ -70,7 +77,7 @@ int calcular_torque(Coordenadas slots[], int totalSlots, int pesoCarga, int dist
 }
 
 int main() {
-    // 1. Inicializa o núcleo do Allegro
+    // Inicializa o núcleo do Allegro
     if (!al_init()) {
         printf("Falha ao inicializar o Allegro.\n");
         return -1;
@@ -83,18 +90,18 @@ int main() {
         return -1;
     }
 
-    // 2. Instala o driver do mouse
+    // Instala o driver do mouse
     if (!al_install_mouse()) {
         printf("Falha ao inicializar o mouse.\n");
         return -1;
     }
 
     if (!al_install_keyboard()) { // inicializa o teclado
-        printf(stderr, "Falha ao inicializar o teclado.\n");
+        printf("Falha ao inicializar o teclado.\n");
         return -1;
     }
 
-    // 3. Cria o temporizador para 60 FPS (1.0 / 60.0)
+    // Cria o temporizador para 60 FPS (1.0 / 60.0)
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 60.0);
     if (!timer) {
         printf("Falha ao criar o temporizador.\n");
@@ -105,7 +112,7 @@ int main() {
     al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW); // seta flag de fullscreen mode
 
 
-    // 4. Cria a janela do jogo
+    // Cria a janela do jogo
     ALLEGRO_DISPLAY* display = al_create_display(1920, 1080);
     if (!display) {
         printf("Falha ao criar a janela.\n");
@@ -117,43 +124,33 @@ int main() {
 
     slotsContraLanca[0].comecoX = 555;
     slotsContraLanca[0].fimX = 580;
-    slotsContraLanca[0].ocupado = false;
     // +5x de espaçamento entre os pesos
     slotsContraLanca[1].comecoX = 585;
     slotsContraLanca[1].fimX = 610;
-    slotsContraLanca[1].ocupado = false;
     // +5x de espaçamento entre os pesos
     slotsContraLanca[2].comecoX = 615;
     slotsContraLanca[2].fimX = 640;
-    slotsContraLanca[2].ocupado = false;
     // +5x de espaçamento entre os pesos
     slotsContraLanca[3].comecoX = 645;
     slotsContraLanca[3].fimX = 670;
-    slotsContraLanca[3].ocupado = false;
     // +5x de espaçamento entre os pesos
     slotsContraLanca[4].comecoX = 675;
     slotsContraLanca[4].fimX = 700;
-    slotsContraLanca[4].ocupado = false;
     // +5x de espaçamento entre os pesos
     slotsContraLanca[5].comecoX = 705;
     slotsContraLanca[5].fimX = 730;
-    slotsContraLanca[5].ocupado = false;
     // +5x de espaçamento entre os pesos
     slotsContraLanca[6].comecoX = 735;
     slotsContraLanca[6].fimX = 760;
-    slotsContraLanca[6].ocupado = false;
     // +5x de espaçamento entre os pesos
     slotsContraLanca[7].comecoX = 765;
     slotsContraLanca[7].fimX = 790;
-    slotsContraLanca[7].ocupado = false;
     // +5x de espaçamento entre os pesos
     slotsContraLanca[8].comecoX = 795;
     slotsContraLanca[8].fimX = 820;
-    slotsContraLanca[8].ocupado = false;
     // +5x de espaçamento entre os pesos
     slotsContraLanca[9].comecoX = 825;
     slotsContraLanca[9].fimX = 850;
-    slotsContraLanca[9].ocupado = false;
 
     for (int i = 0; i < 10; i++) {
         slotsContraLanca[i].comecoY = 352.5;
@@ -167,21 +164,21 @@ int main() {
     slotsLanca[0].comecoX = 782;
 
     slotsLanca[1].comecoX = 812;
-    
+
     slotsLanca[2].comecoX = 842;
-    
+
     slotsLanca[3].comecoX = 872;
-    
+
     slotsLanca[4].comecoX = 902;
-    
+
     slotsLanca[5].comecoX = 932;
-    
+
     slotsLanca[6].comecoX = 962;
-    
+
     slotsLanca[7].comecoX = 992;
-    
+
     slotsLanca[8].comecoX = 1022;
-    
+
     slotsLanca[9].comecoX = 1052;
 
     for (int i = 0; i < 10; i++) {
@@ -250,19 +247,8 @@ int main() {
 
         peso[i].destinoX = peso[i].inventarioX;
         peso[i].destinoY = peso[i].inventarioY;
-    }
 
-    // altere o index do array pra mudar de slot (é para deixar em variável dinâmica no futuro)
-    peso[4].destinoX = slotsContraLanca[3].comecoX - 25;
-    peso[4].destinoY = slotsContraLanca[3].comecoY - 10;
-
-    for (int i = 0; i < 5; i++) { // valores fixos
-        peso[i].origemX = 0;
-        peso[i].origemY = 0;
-        peso[i].origemW = 32;
-        peso[i].origemH = 32;
-        peso[i].destinoW = 80;
-        peso[i].destinoH = 80;
+        peso[i].slotAtual = -1; // começa no inventário, fora de qualquer slot
     }
 
     // definição das cargas (lança)
@@ -293,7 +279,7 @@ int main() {
     carga[3].destinoX = 1042;
     carga[3].destinoY = 868;
 
-    // 5. Cria a fila que organiza os eventos (timer, mouse, janela)
+    // Cria a fila que organiza os eventos (timer, mouse, janela)
     ALLEGRO_EVENT_QUEUE* fila_eventos = al_create_event_queue();
     if (!fila_eventos) {
         printf("Falha ao criar a fila de eventos.\n");
@@ -302,20 +288,20 @@ int main() {
         return -1;
     }
 
-    // Registra as três fontes de eventos na fila
+    // Registra as fontes de eventos na fila
     al_register_event_source(fila_eventos, al_get_display_event_source(display));
     al_register_event_source(fila_eventos, al_get_timer_event_source(timer));
     al_register_event_source(fila_eventos, al_get_keyboard_event_source());
     al_register_event_source(fila_eventos, al_get_mouse_event_source());
 
-    // 6. Configuração antes do loop principal
+    // Configuração antes do loop principal
     bool rodando = true;
     bool redesenhar = true;
     int indice_arrastado = -1; // -1 indica que nenhum bloco está sendo segurado
 
     al_start_timer(timer);
 
-    // 7. Loop principal do jogo (Game Loop)
+    // Loop principal do jogo (Game Loop)
     while (rodando) {
         ALLEGRO_EVENT evento;
         // Fica aguardando até um evento chegar na fila
@@ -340,20 +326,51 @@ int main() {
                 estaTelaCheia = true;
             }
 
-            // COLE O TESTE DA BARRA DE ESPAÇO AQUI DENTRO
+            // Teste da barra de espaço: calcula o torque com os pesos realmente encaixados
+            // e define para onde a grua tomba
             if (evento.keyboard.keycode == ALLEGRO_KEY_SPACE) {
-                int cargaTeste = 20;
+                int cargaTeste = 10;
                 int distanciaCargaTeste = 3;
 
-                slotsContraLanca[1].ocupado = true;
-                slotsContraLanca[1].pesoOcupante = 30;
+                equilibrio = calcular_torque(slotsContraLanca, 10, cargaTeste, distanciaCargaTeste);
 
-                int veredito = calcular_torque(slotsContraLanca, 5, cargaTeste, distanciaCargaTeste);
+                // Define só o alvo; o timer vai aproximando o ângulo atual dele
+                if (equilibrio == 1) {
+                    anguloAlvo = -90; // tomba para a esquerda
+                }
+                else if (equilibrio == -1) {
+                    anguloAlvo = 90;  // tomba para a direita
+                }
+                else {
+                    anguloAlvo = 0;   // equilíbrio
+                }
             }
         }
 
         else if (evento.type == ALLEGRO_EVENT_TIMER) {
             // O timer disparou (momento de atualizar o frame)
+
+            // Só acelera enquanto a grua ainda não chegou no alvo; ao chegar, zera a velocidade
+            if (anguloGrua < anguloAlvo) { // tomba para a direita
+                velocidadeAngularGrua += aceleracaoGrua;
+                anguloGrua += velocidadeAngularGrua;
+                if (anguloGrua > anguloAlvo) {
+                    anguloGrua = anguloAlvo;
+                    velocidadeAngularGrua = 0;
+                }
+            }
+            else if (anguloGrua > anguloAlvo) { // tomba para a esquerda
+                velocidadeAngularGrua += aceleracaoGrua;
+                anguloGrua -= velocidadeAngularGrua;
+                if (anguloGrua < anguloAlvo) {
+                    anguloGrua = anguloAlvo;
+                    velocidadeAngularGrua = 0;
+                }
+            }
+            else {
+                velocidadeAngularGrua = 0;
+            }
+
             redesenhar = true;
         }
         else if (evento.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
@@ -367,6 +384,14 @@ int main() {
                         evento.mouse.y <= (peso[i].destinoY + peso[i].destinoH)) {
 
                         indice_arrastado = i; // Fixa o bloco
+
+                        // Se o peso estava encaixado em um slot, libera o slot ao pegá-lo
+                        if (peso[i].slotAtual != -1) {
+                            slotsContraLanca[peso[i].slotAtual].ocupado = false;
+                            slotsContraLanca[peso[i].slotAtual].pesoOcupante = 0;
+                            peso[i].slotAtual = -1;
+                        }
+
                         break;
                     }
                 }
@@ -380,15 +405,37 @@ int main() {
             }
         }
         else if (evento.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
-            // Solta o bloco e força o retorno às coordenadas do inventário
+            // Solta o bloco: encaixa em um slot livre ou volta para o inventário
             if (indice_arrastado != -1) {
-                peso[indice_arrastado].destinoX = peso[indice_arrastado].inventarioX;
-                peso[indice_arrastado].destinoY = peso[indice_arrastado].inventarioY;
+                bool foiPosicionado = false;
+
+                for (int i = 0; i < 10; i++) {
+                    if (evento.mouse.x >= slotsContraLanca[i].comecoX &&
+                        evento.mouse.x <= slotsContraLanca[i].fimX &&
+                        evento.mouse.y >= slotsContraLanca[i].comecoY &&
+                        evento.mouse.y <= slotsContraLanca[i].fimY &&
+                        !slotsContraLanca[i].ocupado)
+                    {
+                        peso[indice_arrastado].destinoX = slotsContraLanca[i].comecoX - 25; // peso comecoX = slot comecoX - 25
+                        peso[indice_arrastado].destinoY = slotsContraLanca[i].comecoY - 10; // peso comecoY = slot comecoY - 10
+                        peso[indice_arrastado].slotAtual = i;
+                        slotsContraLanca[i].ocupado = true;
+                        slotsContraLanca[i].pesoOcupante = peso[indice_arrastado].carga;
+                        foiPosicionado = true;
+                        break;
+                    }
+                }
+
+                if (!foiPosicionado) {
+                    peso[indice_arrastado].destinoX = peso[indice_arrastado].inventarioX;
+                    peso[indice_arrastado].destinoY = peso[indice_arrastado].inventarioY;
+                }
+
                 indice_arrastado = -1; // Libera as mãos
             }
         }
 
-        // 8. Etapa de Renderização (Desenho na tela)
+        // Etapa de Renderização (Desenho na tela)
         // Só desenha se for a hora certa (redesenhar) e não houver outros eventos travados na fila
         if (redesenhar && al_is_event_queue_empty(fila_eventos)) {
             // Pinta o fundo da tela de preto (R:0, G:0, B:0)
@@ -396,11 +443,8 @@ int main() {
 
             // Desenha o cenario e o sprite da grua
             al_draw_bitmap(cenario, 0, 0, 0);
-            al_draw_scaled_bitmap(grua, 0, 0, 500, 500, 250, 50, 1250, 1250, 0);
+            al_draw_scaled_rotated_bitmap(grua, 260, 345, 250 + 650, 50 + 862.5, 2.5, 2.5, anguloGrua * ALLEGRO_PI / 180, 0); // escala de 2.5 (2.5*500 = 1250px)
             al_draw_scaled_bitmap(elevador, 0, 0, 250, 250, slotsLanca[9].comecoX, slotsLanca[9].comecoY, 625, 625, 0); // comecoX = 782, +30x para passar pro proximo slot
-
-            al_draw_filled_rectangle(555, 352.5, 580, 398.5, al_map_rgb(0, 0, 0)); // rect temporario
-            al_draw_filled_rectangle(585, 352.5, 610, 398.5, al_map_rgb(0, 0, 0)); // rect temporario
 
             // Desenha todos os blocos de contrapeso
             for (int i = 0; i < 5; i++) {
@@ -408,6 +452,12 @@ int main() {
                     peso[i].origemW, peso[i].origemH,
                     peso[i].destinoX, peso[i].destinoY,
                     peso[i].destinoW, peso[i].destinoH, 0);
+
+            }
+
+            // Contorno dos slots da contralança (temporario, para debug)
+            for (int i = 0; i < 10; i++) {
+                al_draw_rectangle(slotsContraLanca[i].comecoX, slotsContraLanca[i].comecoY, slotsContraLanca[i].fimX, slotsContraLanca[i].fimY, al_map_rgb(0, 0, 0), 0);
             }
 
             // Joga as alterações para a tela visível
@@ -418,7 +468,7 @@ int main() {
 
     }
 
-    // 9. Encerramento: destroi as estruturas para não vazar memória (RNF02)
+    // Encerramento: destroi as estruturas para não vazar memória
     al_destroy_event_queue(fila_eventos);
     al_destroy_display(display);
     al_destroy_timer(timer);

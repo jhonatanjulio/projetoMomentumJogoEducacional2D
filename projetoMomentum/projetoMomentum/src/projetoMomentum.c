@@ -36,9 +36,9 @@ typedef struct Coordenadas { // struct padrão coordenadas
 } Coordenadas;
 
 float anguloGrua = 0;            // angulo da grua em graus
-float anguloAlvo = 0;            // angulo para onde a grua tomba (esquerda negativo, direita positivo)
-float velocidadeAngularGrua = 0; // graus por frame
-float aceleracaoGrua = 0.03f;    // aceleracao em graus por frame ao quadrado
+float anguloAlvo = 0.0f;            // angulo para onde a grua tomba (esquerda negativo, direita positivo)
+float velocidadeAngularGrua = 0.0f; // graus por frame
+float aceleracaoGrua = 0.05f;    // aceleracao em graus por frame ao quadrado
 int equilibrio = 0;
 
 int calcular_torque(Coordenadas slots[], int totalSlots, int pesoCarga, int distanciaCarga) {
@@ -46,9 +46,9 @@ int calcular_torque(Coordenadas slots[], int totalSlots, int pesoCarga, int dist
     double torqueLanca = 0.0;
 
     // Percorre os slots da contralança e soma o torque dos blocos encaixados
-    for (int i = 0; i < totalSlots; i++) {
+    for (int i = 0; i < totalSlots - 1; i++) {
         if (slots[i].ocupado) {
-            int distancia = i + 1; // Posição física de 1 a N a partir do mastro
+            int distancia = totalSlots - i; // Posição física de 1 a N a partir do mastro
             torqueContraLanca += (double)slots[i].pesoOcupante * distancia;
         }
     }
@@ -312,9 +312,7 @@ int main() {
             // Clicou no X da janela
             rodando = false;
         }
-
-        if (evento.type == ALLEGRO_EVENT_KEY_DOWN) // alternar minimizar/maximizar tela inteira
-        {
+        else if (evento.type == ALLEGRO_EVENT_KEY_DOWN) {
             if (estaTelaCheia && evento.keyboard.keycode == ALLEGRO_KEY_F11) { // minimiza
                 al_toggle_display_flag(display, ALLEGRO_FULLSCREEN_WINDOW, false);
                 al_toggle_display_flag(display, ALLEGRO_WINDOWED, true);
@@ -326,37 +324,32 @@ int main() {
                 estaTelaCheia = true;
             }
 
-            // Teste da barra de espaço: calcula o torque com os pesos realmente encaixados
-            // e define para onde a grua tomba
+            // Teste da barra de espaço: calcula o torque e define para onde a grua tomba
             if (evento.keyboard.keycode == ALLEGRO_KEY_SPACE) {
                 int cargaTeste = 10;
-                int distanciaCargaTeste = 3;
+                int distanciaCargaTeste = 1;
 
                 equilibrio = calcular_torque(slotsContraLanca, 10, cargaTeste, distanciaCargaTeste);
 
-                // Define só o alvo; o timer vai aproximando o ângulo atual dele
                 if (equilibrio == 1) {
-                    anguloAlvo = -90; // tomba para a esquerda
+                    anguloAlvo = -90.0f; // tomba para a esquerda
                 }
                 else if (equilibrio == -1) {
-                    anguloAlvo = 90;  // tomba para a direita
+                    anguloAlvo = 90.0f;  // tomba para a direita
                 }
                 else {
-                    anguloAlvo = 0;   // equilíbrio
+                    anguloAlvo = 0.0f;   // equilíbrio
                 }
             }
         }
-
         else if (evento.type == ALLEGRO_EVENT_TIMER) {
             // O timer disparou (momento de atualizar o frame)
-
-            // Só acelera enquanto a grua ainda não chegou no alvo; ao chegar, zera a velocidade
             if (anguloGrua < anguloAlvo) { // tomba para a direita
                 velocidadeAngularGrua += aceleracaoGrua;
                 anguloGrua += velocidadeAngularGrua;
                 if (anguloGrua > anguloAlvo) {
                     anguloGrua = anguloAlvo;
-                    velocidadeAngularGrua = 0;
+                    velocidadeAngularGrua = 0.0f;
                 }
             }
             else if (anguloGrua > anguloAlvo) { // tomba para a esquerda
@@ -364,11 +357,11 @@ int main() {
                 anguloGrua -= velocidadeAngularGrua;
                 if (anguloGrua < anguloAlvo) {
                     anguloGrua = anguloAlvo;
-                    velocidadeAngularGrua = 0;
+                    velocidadeAngularGrua = 0.0f;
                 }
             }
             else {
-                velocidadeAngularGrua = 0;
+                velocidadeAngularGrua = 0.0f;
             }
 
             redesenhar = true;
@@ -441,23 +434,27 @@ int main() {
             // Pinta o fundo da tela de preto (R:0, G:0, B:0)
             al_clear_to_color(al_map_rgb(0, 0, 0));
 
-            // Desenha o cenario e o sprite da grua
+            // Desenha o cenario e o sprite da grua rotacionando
             al_draw_bitmap(cenario, 0, 0, 0);
-            al_draw_scaled_rotated_bitmap(grua, 260, 345, 250 + 650, 50 + 862.5, 2.5, 2.5, anguloGrua * ALLEGRO_PI / 180, 0); // escala de 2.5 (2.5*500 = 1250px)
-            al_draw_scaled_bitmap(elevador, 0, 0, 250, 250, slotsLanca[9].comecoX, slotsLanca[9].comecoY, 625, 625, 0); // comecoX = 782, +30x para passar pro proximo slot
+            al_draw_scaled_rotated_bitmap(grua, 260, 345, 250 + 650, 50 + 862.5, 2.5, 2.5, anguloGrua * ALLEGRO_PI / 180, 0);
 
-            // Desenha todos os blocos de contrapeso
-            for (int i = 0; i < 5; i++) {
-                al_draw_scaled_bitmap(peso[i].sprite, peso[i].origemX, peso[i].origemY,
-                    peso[i].origemW, peso[i].origemH,
-                    peso[i].destinoX, peso[i].destinoY,
-                    peso[i].destinoW, peso[i].destinoH, 0);
+            // Só desenha o elevador, os contrapesos e os slots SE a grua estiver em pé
+            if (anguloGrua == 0) {
+                al_draw_scaled_bitmap(elevador, 0, 0, 250, 250, slotsLanca[9].comecoX, slotsLanca[9].comecoY, 625, 625, 0);
 
-            }
+                // Desenha todos os blocos de contrapeso
+                for (int i = 0; i < 5; i++) {
+                    al_draw_scaled_bitmap(peso[i].sprite, peso[i].origemX, peso[i].origemY,
+                        peso[i].origemW, peso[i].origemH,
+                        peso[i].destinoX, peso[i].destinoY,
+                        peso[i].destinoW, peso[i].destinoH, 0);
 
-            // Contorno dos slots da contralança (temporario, para debug)
-            for (int i = 0; i < 10; i++) {
-                al_draw_rectangle(slotsContraLanca[i].comecoX, slotsContraLanca[i].comecoY, slotsContraLanca[i].fimX, slotsContraLanca[i].fimY, al_map_rgb(0, 0, 0), 0);
+                }
+
+                // Contorno dos slots da contralança (temporario, para debug)
+                for (int i = 0; i < 10; i++) {
+                    al_draw_rectangle(slotsContraLanca[i].comecoX, slotsContraLanca[i].comecoY, slotsContraLanca[i].fimX, slotsContraLanca[i].fimY, al_map_rgb(0, 0, 0), 0);
+                }
             }
 
             // Joga as alterações para a tela visível

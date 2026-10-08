@@ -46,7 +46,7 @@ int calcular_torque(Coordenadas slots[], int totalSlots, int pesoCarga, int dist
     double torqueLanca = 0.0;
 
     // Percorre os slots da contralança e soma o torque dos blocos encaixados
-    for (int i = 0; i < totalSlots - 1; i++) {
+    for (int i = 0; i < totalSlots; i++) {
         if (slots[i].ocupado) {
             int distancia = totalSlots - i; // Posição física de 1 a N a partir do mastro
             torqueContraLanca += (double)slots[i].pesoOcupante * distancia;
@@ -83,7 +83,10 @@ int main() {
         return -1;
     }
 
-    al_init_primitives_addon();
+    if (!al_init_primitives_addon()) {
+        printf("Falha ao inicializar elementos primitivos.");
+        return -1;
+    }
 
     if (!al_init_image_addon()) {
         printf("Falha ao inicializar as imagens.");
@@ -441,6 +444,7 @@ int main() {
             // Só desenha o elevador, os contrapesos e os slots SE a grua estiver em pé
             if (anguloGrua == 0) {
                 al_draw_scaled_bitmap(elevador, 0, 0, 250, 250, slotsLanca[9].comecoX, slotsLanca[9].comecoY, 625, 625, 0);
+                al_draw_scaled_bitmap(carga[1].sprite, 0, 0, 250, 250, slotsCarga[9].comecoX, slotsCarga[9].comecoY, 625, 625, 0);
 
                 // Desenha todos os blocos de contrapeso
                 for (int i = 0; i < 5; i++) {

@@ -5,9 +5,12 @@
 #include <allegro5/allegro_primitives.h>
 
 typedef struct Fases {
-    int dificuldade; // de 1 a 3 (facil, medio, dificil);
-    float cargaX;
-    float cargaY;
+    int dificuldade;                      // de 1 a 3 (facil, medio, dificil)
+    int valorCarga;                       // peso da carga na lança (precisa existir um sprite com esse valor)
+    int distanciaCarga;                   // de 1 a 10 a partir do mastro
+    int pesosInventario[5];               // valores dos blocos que o jogador recebe nesta fase
+    int qtdPesosInventario;               // quantos valores do vetor acima são usados
+    float tempoLimite;                    // em segundos (usado pelo cronômetro)
 } Fases;
 
 typedef struct Pesos {
@@ -24,6 +27,7 @@ typedef struct Pesos {
     float inventarioY; // Guarda a posição fixa Y no chão
     int carga;
     int slotAtual;     // -1 = está no inventário, senão é o índice do slot da contralança
+    bool disponivel;   // true = este bloco faz parte do inventário da fase atual
 } Pesos;
 
 typedef struct Coordenadas { // struct padrão coordenadas
@@ -40,6 +44,61 @@ float anguloAlvo = 0.0f;            // angulo para onde a grua tomba (esquerda n
 float velocidadeAngularGrua = 0.0f; // graus por frame
 float aceleracaoGrua = 0.05f;    // aceleracao em graus por frame ao quadrado
 int equilibrio = 0;
+
+// Dados das fases (projetadas para 10 posições; soluções de referência nos comentários)
+// Ordem dos campos: dificuldade, valorCarga, distanciaCarga, {pesos do inventário}, qtd de pesos, tempoLimite
+Fases fases[5] = {
+    { 1, 10, 1, { 5, 10 },           2,  45.0f }, // M = 10  -> 10 na pos. 1, ou 5 na pos. 2
+    { 1, 20, 3, { 5, 10 },           2,  60.0f }, // M = 60  -> 10 na pos. 6
+    { 2, 30, 4, { 3, 5, 10 },        3,  75.0f }, // M = 120 -> 10 na pos. 10 + 5 na pos. 4
+    { 3, 30, 5, { 3, 5, 10 },        3,  90.0f }, // M = 150 -> 10 na pos. 10 + 5 na pos. 7 + 3 na pos. 5
+    { 3, 20, 9, { 1, 2, 3, 5, 10 },  5, 120.0f }  // M = 180 -> 10 na 10 + 5 na 9 + 3 na 8 + 2 na 5 + 1 na 1
+};
+
+int faseAtual = 0; // índice da fase em jogo (0 = primeira fase)
+
+// Procura no vetor de cargas qual sprite tem o valor pedido. Retorna o índice, ou -1 se não existir.
+int buscar_indice_carga(Pesos cargas[], int totalCargas, int valor) {
+    for (int i = 0; i < totalCargas; i++) {
+        if (cargas[i].carga == valor) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// Diz se um bloco com esse valor faz parte do inventário da fase.
+bool peso_esta_na_fase(Fases* fase, int valorPeso) {
+    for (int i = 0; i < fase->qtdPesosInventario; i++) {
+        if (fase->pesosInventario[i] == valorPeso) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Confere se os dados das fases são válidos antes do jogo começar.
+// Evita acessar slotsCarga fora do vetor ou desenhar uma carga sem sprite.
+bool validar_fases(Pesos cargas[], int totalCargas) {
+    bool tudoCerto = true;
+
+    for (int i = 0; i < 5; i++) {
+        if (fases[i].distanciaCarga < 1 || fases[i].distanciaCarga > 10) {
+            printf("Fase %d: distancia da carga (%d) fora de 1 a 10.\n", i + 1, fases[i].distanciaCarga);
+            tudoCerto = false;
+        }
+        if (buscar_indice_carga(cargas, totalCargas, fases[i].valorCarga) == -1) {
+            printf("Fase %d: nao existe sprite para a carga %d.\n", i + 1, fases[i].valorCarga);
+            tudoCerto = false;
+        }
+        if (fases[i].qtdPesosInventario < 1 || fases[i].qtdPesosInventario > 5) {
+            printf("Fase %d: quantidade de pesos no inventario invalida (%d).\n", i + 1, fases[i].qtdPesosInventario);
+            tudoCerto = false;
+        }
+    }
+
+    return tudoCerto;
+}
 
 int calcular_torque(Coordenadas slots[], int totalSlots, int pesoCarga, int distanciaCarga) {
     double torqueContraLanca = 0.0;
@@ -236,7 +295,9 @@ int main() {
     peso[4].sprite = al_load_bitmap("assets/sprites/peso_grua_10.png");
     peso[4].carga = 10;
 
-    // Distribui os 5 pesos lado a lado na base da tela (inventário)
+    // Distribui no chão (inventário) só os pesos que a fase atual oferece
+    int posicaoNoInventario = 0; // conta quantos pesos disponíveis já foram colocados no chão
+
     for (int i = 0; i < 5; i++) {
         peso[i].origemX = 0;
         peso[i].origemY = 0;
@@ -245,8 +306,14 @@ int main() {
         peso[i].destinoW = 80;
         peso[i].destinoH = 80;
 
-        peso[i].inventarioX = 100 + (i * 100); // Espaçados a cada 100 pixels
-        peso[i].inventarioY = 900;             // Altura do chão
+        peso[i].disponivel = peso_esta_na_fase(&fases[faseAtual], peso[i].carga);
+
+        // Os disponíveis ficam lado a lado, sem buracos de quem ficou de fora da fase
+        peso[i].inventarioX = 100 + (posicaoNoInventario * 100); // Espaçados a cada 100 pixels
+        peso[i].inventarioY = 900;                               // Altura do chão
+        if (peso[i].disponivel) {
+            posicaoNoInventario++;
+        }
 
         peso[i].destinoX = peso[i].inventarioX;
         peso[i].destinoY = peso[i].inventarioY;
@@ -278,9 +345,15 @@ int main() {
         carga[i].destinoH = 80;
     }
 
-    //Posição da Carga
-    carga[3].destinoX = 1042;
-    carga[3].destinoY = 868;
+    // A posição da carga não é mais fixa aqui: ela vem da distância da fase atual (ver desenho)
+
+    // Confere os dados das fases antes de começar o jogo
+    if (!validar_fases(carga, 4)) {
+        printf("Dados das fases invalidos. Corrija o vetor 'fases' e compile de novo.\n");
+        al_destroy_display(display);
+        al_destroy_timer(timer);
+        return -1;
+    }
 
     // Cria a fila que organiza os eventos (timer, mouse, janela)
     ALLEGRO_EVENT_QUEUE* fila_eventos = al_create_event_queue();
@@ -329,10 +402,9 @@ int main() {
 
             // Teste da barra de espaço: calcula o torque e define para onde a grua tomba
             if (evento.keyboard.keycode == ALLEGRO_KEY_SPACE) {
-                int cargaTeste = 10;
-                int distanciaCargaTeste = 1;
-
-                equilibrio = calcular_torque(slotsContraLanca, 10, cargaTeste, distanciaCargaTeste);
+                // A carga e a distância agora vêm da fase atual
+                equilibrio = calcular_torque(slotsContraLanca, 10,
+                    fases[faseAtual].valorCarga, fases[faseAtual].distanciaCarga);
 
                 if (equilibrio == 1) {
                     anguloAlvo = -90.0f; // tomba para a esquerda
@@ -373,6 +445,11 @@ int main() {
             // Tenta capturar um bloco apenas se as mãos estiverem livres
             if (indice_arrastado == -1) {
                 for (int i = 0; i < 5; i++) {
+                    // Blocos fora do inventário da fase não podem ser pegos
+                    if (!peso[i].disponivel) {
+                        continue;
+                    }
+
                     // Validação AABB (Colisão Ponto-Retângulo)
                     if (evento.mouse.x >= peso[i].destinoX &&
                         evento.mouse.x <= (peso[i].destinoX + peso[i].destinoW) &&
@@ -443,11 +520,19 @@ int main() {
 
             // Só desenha o elevador, os contrapesos e os slots SE a grua estiver em pé
             if (anguloGrua == 0) {
-                al_draw_scaled_bitmap(elevador, 0, 0, 250, 250, slotsLanca[9].comecoX, slotsLanca[9].comecoY, 625, 625, 0);
-                al_draw_scaled_bitmap(carga[1].sprite, 0, 0, 250, 250, slotsCarga[9].comecoX, slotsCarga[9].comecoY, 625, 625, 0);
+                // Na lança, a distância d fica no índice d - 1 (índice 0 = mais perto do mastro)
+                int indiceSlotCarga = fases[faseAtual].distanciaCarga - 1;
+                int indiceSpriteCarga = buscar_indice_carga(carga, 4, fases[faseAtual].valorCarga);
 
-                // Desenha todos os blocos de contrapeso
+                al_draw_scaled_bitmap(elevador, 0, 0, 250, 250, slotsLanca[indiceSlotCarga].comecoX, slotsLanca[indiceSlotCarga].comecoY, 625, 625, 0);
+                al_draw_scaled_bitmap(carga[indiceSpriteCarga].sprite, 0, 0, 250, 250, slotsCarga[indiceSlotCarga].comecoX, slotsCarga[indiceSlotCarga].comecoY, 625, 625, 0);
+
+                // Desenha só os blocos de contrapeso que a fase oferece
                 for (int i = 0; i < 5; i++) {
+                    if (!peso[i].disponivel) {
+                        continue;
+                    }
+
                     al_draw_scaled_bitmap(peso[i].sprite, peso[i].origemX, peso[i].origemY,
                         peso[i].origemW, peso[i].origemH,
                         peso[i].destinoX, peso[i].destinoY,

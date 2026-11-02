@@ -45,6 +45,11 @@ float velocidadeAngularGrua = 0.0f; // graus por frame
 float aceleracaoGrua = 0.05f;    // aceleracao em graus por frame ao quadrado
 int equilibrio = 0;
 
+int estadoFase = 0;              // 0 = montando, 1 = carga subindo (vitória), 2 = fase concluída
+int quadroElevador = 0;          // quadro atual do spritesheet do elevador (0 a 14)
+int contadorTicksElevador = 0;   // conta os ticks até trocar de quadro
+int contadorTicksParado = 0;     // conta os ticks com a carga parada lá em cima
+
 // Dados das fases (projetadas para 10 posições; soluções de referência nos comentários)
 // Ordem dos campos: dificuldade, valorCarga, distanciaCarga, {pesos do inventário}, qtd de pesos, tempoLimite
 Fases fases[5] = {
@@ -133,6 +138,49 @@ int calcular_torque(Coordenadas slots[], int totalSlots, int pesoCarga, int dist
         printf("Resultado: TOMBA PARA A DIREITA!\n");
         return -1;
     }
+}
+
+// Deixa a fase escolhida como no início: grua em pé, contralança vazia e blocos da fase no chão
+void carregar_fase(int indice, Pesos pesos[], int totalPesos, Coordenadas slots[], int totalSlots) {
+    faseAtual = indice;
+
+    // Grua volta a ficar em pé e parada
+    anguloGrua = 0.0f;
+    anguloAlvo = 0.0f;
+    velocidadeAngularGrua = 0.0f;
+    equilibrio = 0;
+
+    // Volta para a montagem, com a carga lá embaixo
+    estadoFase = 0;
+    quadroElevador = 0;
+    contadorTicksElevador = 0;
+    contadorTicksParado = 0;
+
+    // Esvazia todos os slots da contralança
+    for (int i = 0; i < totalSlots; i++) {
+        slots[i].ocupado = false;
+        slots[i].pesoOcupante = 0;
+    }
+
+    // Coloca no chão só os pesos da fase, lado a lado
+    int posicaoNoInventario = 0;
+
+    for (int i = 0; i < totalPesos; i++) {
+        pesos[i].disponivel = peso_esta_na_fase(&fases[faseAtual], pesos[i].carga);
+
+        pesos[i].inventarioX = 100 + (posicaoNoInventario * 100); // Espaçados a cada 100 pixels
+        pesos[i].inventarioY = 900;                               // Altura do chão
+        if (pesos[i].disponivel) {
+            posicaoNoInventario++;
+        }
+
+        pesos[i].destinoX = pesos[i].inventarioX;
+        pesos[i].destinoY = pesos[i].inventarioY;
+        pesos[i].slotAtual = -1; // fora de qualquer slot
+    }
+
+    printf("\n=== FASE %d === Carga %d na distancia %d\n", faseAtual + 1,
+        fases[faseAtual].valorCarga, fases[faseAtual].distanciaCarga);
 }
 
 int main() {
@@ -275,7 +323,7 @@ int main() {
 
     ALLEGRO_BITMAP* cenario = al_load_bitmap("assets/cenario/cenario_temp.png");
     ALLEGRO_BITMAP* grua = al_load_bitmap("assets/sprites/grua_sem_elevador.png");
-    ALLEGRO_BITMAP* elevador = al_load_bitmap("assets/sprites/elevador_grua.png");
+    ALLEGRO_BITMAP* elevador = al_load_bitmap("assets/sprites/elevador_grua_spritesheet.png"); // 15 quadros de 250x250 lado a lado
 
     // definição dos pesos (contra lança)
     Pesos peso[5];
@@ -295,9 +343,7 @@ int main() {
     peso[4].sprite = al_load_bitmap("assets/sprites/peso_grua_10.png");
     peso[4].carga = 10;
 
-    // Distribui no chão (inventário) só os pesos que a fase atual oferece
-    int posicaoNoInventario = 0; // conta quantos pesos disponíveis já foram colocados no chão
-
+    // Tamanhos fixos dos pesos (a posição no chão é definida em carregar_fase)
     for (int i = 0; i < 5; i++) {
         peso[i].origemX = 0;
         peso[i].origemY = 0;
@@ -305,20 +351,6 @@ int main() {
         peso[i].origemH = 32;
         peso[i].destinoW = 80;
         peso[i].destinoH = 80;
-
-        peso[i].disponivel = peso_esta_na_fase(&fases[faseAtual], peso[i].carga);
-
-        // Os disponíveis ficam lado a lado, sem buracos de quem ficou de fora da fase
-        peso[i].inventarioX = 100 + (posicaoNoInventario * 100); // Espaçados a cada 100 pixels
-        peso[i].inventarioY = 900;                               // Altura do chão
-        if (peso[i].disponivel) {
-            posicaoNoInventario++;
-        }
-
-        peso[i].destinoX = peso[i].inventarioX;
-        peso[i].destinoY = peso[i].inventarioY;
-
-        peso[i].slotAtual = -1; // começa no inventário, fora de qualquer slot
     }
 
     // definição das cargas (lança)
@@ -354,6 +386,9 @@ int main() {
         al_destroy_timer(timer);
         return -1;
     }
+
+    // Começa o jogo na primeira fase
+    carregar_fase(0, peso, 5, slotsContraLanca, 10);
 
     // Cria a fila que organiza os eventos (timer, mouse, janela)
     ALLEGRO_EVENT_QUEUE* fila_eventos = al_create_event_queue();
@@ -400,8 +435,20 @@ int main() {
                 estaTelaCheia = true;
             }
 
+            // Teste da tecla N: pula para a próxima fase (depois da última, volta para a primeira)
+            if (evento.keyboard.keycode == ALLEGRO_KEY_N) {
+                int proximaFase = faseAtual + 1;
+                if (proximaFase >= 5) {
+                    proximaFase = 0;
+                }
+
+                carregar_fase(proximaFase, peso, 5, slotsContraLanca, 10);
+                indice_arrastado = -1; // solta qualquer bloco que estivesse na mão
+            }
+
             // Teste da barra de espaço: calcula o torque e define para onde a grua tomba
-            if (evento.keyboard.keycode == ALLEGRO_KEY_SPACE) {
+            // Só confirma durante a montagem e com as mãos livres
+            if (evento.keyboard.keycode == ALLEGRO_KEY_SPACE && estadoFase == 0 && indice_arrastado == -1) {
                 // A carga e a distância agora vêm da fase atual
                 equilibrio = calcular_torque(slotsContraLanca, 10,
                     fases[faseAtual].valorCarga, fases[faseAtual].distanciaCarga);
@@ -414,6 +461,10 @@ int main() {
                 }
                 else {
                     anguloAlvo = 0.0f;   // equilíbrio
+                    estadoFase = 1;      // começa a subir a carga
+                    quadroElevador = 0;
+                    contadorTicksElevador = 0;
+                    contadorTicksParado = 0;
                 }
             }
         }
@@ -439,11 +490,29 @@ int main() {
                 velocidadeAngularGrua = 0.0f;
             }
 
+            // Animação de vitória: recolhe o cabo quadro a quadro e depois espera parada lá em cima
+            if (estadoFase == 1) {
+                if (quadroElevador < 14) {
+                    contadorTicksElevador++;
+                    if (contadorTicksElevador >= 8) { // troca de quadro a cada 8 ticks (~0,13 s)
+                        quadroElevador++;
+                        contadorTicksElevador = 0;
+                    }
+                }
+                else {
+                    contadorTicksParado++;
+                    if (contadorTicksParado >= 60) { // 60 ticks = 1 segundo parada lá em cima
+                        estadoFase = 2;
+                        printf("Fase %d concluida!\n", faseAtual + 1);
+                    }
+                }
+            }
+
             redesenhar = true;
         }
         else if (evento.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
-            // Tenta capturar um bloco apenas se as mãos estiverem livres
-            if (indice_arrastado == -1) {
+            // Tenta capturar um bloco apenas se as mãos estiverem livres e a fase estiver na montagem
+            if (indice_arrastado == -1 && estadoFase == 0) {
                 for (int i = 0; i < 5; i++) {
                     // Blocos fora do inventário da fase não podem ser pegos
                     if (!peso[i].disponivel) {
@@ -524,8 +593,11 @@ int main() {
                 int indiceSlotCarga = fases[faseAtual].distanciaCarga - 1;
                 int indiceSpriteCarga = buscar_indice_carga(carga, 4, fases[faseAtual].valorCarga);
 
-                al_draw_scaled_bitmap(elevador, 0, 0, 250, 250, slotsLanca[indiceSlotCarga].comecoX, slotsLanca[indiceSlotCarga].comecoY, 625, 625, 0);
-                al_draw_scaled_bitmap(carga[indiceSpriteCarga].sprite, 0, 0, 250, 250, slotsCarga[indiceSlotCarga].comecoX, slotsCarga[indiceSlotCarga].comecoY, 625, 625, 0);
+                // Cada quadro do spritesheet recolhe 5 px de cabo (12,5 px na tela), então a carga sobe junto
+                float subidaCarga = quadroElevador * 12.5f;
+
+                al_draw_scaled_bitmap(elevador, quadroElevador * 250, 0, 250, 250, slotsLanca[indiceSlotCarga].comecoX, slotsLanca[indiceSlotCarga].comecoY, 625, 625, 0);
+                al_draw_scaled_bitmap(carga[indiceSpriteCarga].sprite, 0, 0, 250, 250, slotsCarga[indiceSlotCarga].comecoX, slotsCarga[indiceSlotCarga].comecoY - subidaCarga, 625, 625, 0);
 
                 // Desenha só os blocos de contrapeso que a fase oferece
                 for (int i = 0; i < 5; i++) {

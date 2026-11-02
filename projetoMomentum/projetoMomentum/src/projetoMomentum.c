@@ -50,6 +50,12 @@ int quadroElevador = 0;          // quadro atual do spritesheet do elevador (0 a
 int contadorTicksElevador = 0;   // conta os ticks até trocar de quadro
 int contadorTicksParado = 0;     // conta os ticks com a carga parada lá em cima
 
+double inicioFase = 0.0;         // momento em que a fase começou (al_get_time, em segundos)
+double tempoRestante = 0.0;      // segundos que faltam para o tempo acabar
+double tempoGasto = 0.0;         // Δt: do início da fase até o Confirmar (RN01)
+bool cronometroAtivo = false;    // true enquanto o tempo está correndo
+bool tempoEsgotado = false;      // true quando o tempo chegou a zero
+
 // Dados das fases (projetadas para 10 posições; soluções de referência nos comentários)
 // Ordem dos campos: dificuldade, valorCarga, distanciaCarga, {pesos do inventário}, qtd de pesos, tempoLimite
 Fases fases[5] = {
@@ -155,6 +161,13 @@ void carregar_fase(int indice, Pesos pesos[], int totalPesos, Coordenadas slots[
     quadroElevador = 0;
     contadorTicksElevador = 0;
     contadorTicksParado = 0;
+
+    // Reinicia o cronômetro com o tempo limite da fase
+    inicioFase = al_get_time();
+    tempoRestante = fases[faseAtual].tempoLimite;
+    tempoGasto = 0.0;
+    cronometroAtivo = true;
+    tempoEsgotado = false;
 
     // Esvazia todos os slots da contralança
     for (int i = 0; i < totalSlots; i++) {
@@ -447,8 +460,13 @@ int main() {
             }
 
             // Teste da barra de espaço: calcula o torque e define para onde a grua tomba
-            // Só confirma durante a montagem e com as mãos livres
-            if (evento.keyboard.keycode == ALLEGRO_KEY_SPACE && estadoFase == 0 && indice_arrastado == -1) {
+            // Só confirma durante a montagem, com as mãos livres e com o tempo correndo
+            if (evento.keyboard.keycode == ALLEGRO_KEY_SPACE && estadoFase == 0 && indice_arrastado == -1 && cronometroAtivo) {
+                // Para o cronômetro e guarda o tempo gasto na fase (RN01)
+                cronometroAtivo = false;
+                tempoGasto = al_get_time() - inicioFase;
+                printf("Tempo gasto na fase: %.2f s\n", tempoGasto);
+
                 // A carga e a distância agora vêm da fase atual
                 equilibrio = calcular_torque(slotsContraLanca, 10,
                     fases[faseAtual].valorCarga, fases[faseAtual].distanciaCarga);
@@ -490,6 +508,18 @@ int main() {
                 velocidadeAngularGrua = 0.0f;
             }
 
+            // Cronômetro regressivo: calcula quanto falta a partir do momento em que a fase começou
+            if (cronometroAtivo) {
+                tempoRestante = fases[faseAtual].tempoLimite - (al_get_time() - inicioFase);
+
+                if (tempoRestante <= 0.0) {
+                    tempoRestante = 0.0;
+                    cronometroAtivo = false;
+                    tempoEsgotado = true;
+                    printf("Tempo esgotado na fase %d!\n", faseAtual + 1);
+                }
+            }
+
             // Animação de vitória: recolhe o cabo quadro a quadro e depois espera parada lá em cima
             if (estadoFase == 1) {
                 if (quadroElevador < 14) {
@@ -506,6 +536,18 @@ int main() {
                         printf("Fase %d concluida!\n", faseAtual + 1);
                     }
                 }
+            }
+
+            // Fase concluída: avança para a próxima (depois da última, volta para a primeira)
+            if (estadoFase == 2) {
+                int proximaFase = faseAtual + 1;
+                if (proximaFase >= 5) {
+                    printf("Todas as fases concluidas!\n");
+                    proximaFase = 0;
+                }
+
+                carregar_fase(proximaFase, peso, 5, slotsContraLanca, 10);
+                indice_arrastado = -1;
             }
 
             redesenhar = true;
@@ -617,6 +659,20 @@ int main() {
                     al_draw_rectangle(slotsContraLanca[i].comecoX, slotsContraLanca[i].comecoY, slotsContraLanca[i].fimX, slotsContraLanca[i].fimY, al_map_rgb(0, 0, 0), 0);
                 }
             }
+
+            // Barra do cronômetro (temporária, até o HUD): encolhe conforme o tempo acaba
+            float proporcaoTempo = tempoRestante / fases[faseAtual].tempoLimite; // 1 = cheio, 0 = acabou
+            ALLEGRO_COLOR corBarra = al_map_rgb(60, 180, 75);   // verde
+            if (proporcaoTempo < 0.5f) {
+                corBarra = al_map_rgb(240, 190, 40);            // amarelo na metade do tempo
+            }
+            if (proporcaoTempo < 0.25f) {
+                corBarra = al_map_rgb(220, 50, 40);             // vermelho no último quarto
+            }
+
+            al_draw_filled_rectangle(760, 40, 1160, 70, al_map_rgb(40, 40, 40));                   // fundo
+            al_draw_filled_rectangle(760, 40, 760 + 400 * proporcaoTempo, 70, corBarra);          // tempo restante
+            al_draw_rectangle(760, 40, 1160, 70, al_map_rgb(0, 0, 0), 2);                          // contorno
 
             // Joga as alterações para a tela visível
             al_flip_display();

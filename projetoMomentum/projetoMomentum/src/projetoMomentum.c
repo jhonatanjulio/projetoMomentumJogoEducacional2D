@@ -876,7 +876,7 @@ int main() {
                 al_draw_filled_rectangle(40, 105, 230, 145, al_map_rgba(15, 20, 28, 215));
                 snprintf(infoFase, sizeof(infoFase), "FASE %d / 5)", faseAtual + 1);
 
-                snprintf(infoTorque, sizeof(infoTorque), "FORMULA: M = F x d\n(Equilibrio: Torque Esq = Torque Dir)", faseAtual + 1);
+                snprintf(infoTorque, sizeof(infoTorque), "FORMULA: M = F x d(Equilibrio: Torque Esq = Torque Dir)", faseAtual + 1);
                 al_draw_filled_rectangle(1500, 600, 1850, 850, al_map_rgb(114, 47, 55));
                 al_draw_rectangle(1500, 600, 1850, 850, al_map_rgb(255, 255, 255), 3);
 

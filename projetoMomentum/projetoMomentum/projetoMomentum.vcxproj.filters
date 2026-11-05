@@ -59,5 +59,8 @@
     <Image Include="assets\sprites\grua_sem_elevador.png">
       <Filter>Arquivos de Recurso</Filter>
     </Image>
+    <Image Include="assets\cenario\cenario_menu.png">
+      <Filter>Arquivos de Recurso</Filter>
+    </Image>
   </ItemGroup>
 </Project>

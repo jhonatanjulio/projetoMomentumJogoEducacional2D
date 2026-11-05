@@ -759,25 +759,23 @@ int main() {
                 if (cenario) {
                     al_draw_bitmap(cenario, 0, 0, 0);
                 }
-                al_draw_filled_rectangle(460, 150, 1460, 840, al_map_rgba(15, 20, 28, 230));
-                al_draw_rectangle(460, 150, 1460, 840, al_map_rgb(240, 190, 40), 4);
 
                 desenhar_texto_escalado(fonte, al_map_rgb(240, 190, 40), 960, 210, 4.5f, ALLEGRO_ALIGN_CENTRE, "EQUILIBRIO: TORQUE CHALLENGE");
                 desenhar_texto_escalado(fonte, al_map_rgb(220, 220, 220), 960, 290, 2.5f, ALLEGRO_ALIGN_CENTRE, "Equilibre a grua da obra calculando o Momento de uma Forca");
                 desenhar_texto_escalado(fonte, al_map_rgb(100, 220, 120), 960, 340, 3.0f, ALLEGRO_ALIGN_CENTRE, "Formula: M = F x d   |   Equilibrio: Sigma M = 0");
 
                 // Botão JOGAR
-                al_draw_filled_rectangle(760, 420, 1160, 500, al_map_rgb(45, 160, 70));
+                al_draw_filled_rectangle(760, 420, 1160, 500, al_map_rgb(114, 47, 55));
                 al_draw_rectangle(760, 420, 1160, 500, al_map_rgb(255, 255, 255), 3);
                 desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 960, 448, 3.0f, ALLEGRO_ALIGN_CENTRE, "JOGAR");
 
                 // Botão RECORDES
-                al_draw_filled_rectangle(760, 530, 1160, 610, al_map_rgb(50, 110, 190));
+                al_draw_filled_rectangle(760, 530, 1160, 610, al_map_rgb(114, 47, 55));
                 al_draw_rectangle(760, 530, 1160, 610, al_map_rgb(255, 255, 255), 3);
                 desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 960, 558, 3.0f, ALLEGRO_ALIGN_CENTRE, "RECORDES");
 
                 // Botão SAIR
-                al_draw_filled_rectangle(760, 640, 1160, 720, al_map_rgb(190, 55, 50));
+                al_draw_filled_rectangle(760, 640, 1160, 720, al_map_rgb(114, 47, 55));
                 al_draw_rectangle(760, 640, 1160, 720, al_map_rgb(255, 255, 255), 3);
                 desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 960, 668, 3.0f, ALLEGRO_ALIGN_CENTRE, "SAIR");
 
@@ -869,20 +867,26 @@ int main() {
                 }
 
                 // ==================== HUD SUPERIOR ====================
-                al_draw_filled_rectangle(30, 30, 210, 85, al_map_rgba(30, 35, 45, 220));
-                al_draw_rectangle(30, 30, 210, 85, al_map_rgb(255, 255, 255), 2);
-                desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 120, 48, 2.4f, ALLEGRO_ALIGN_CENTRE, "MENU [ESC]");
+                al_draw_filled_rectangle(40, 30, 230, 85, al_map_rgba(114, 47, 55, 220));
+                al_draw_rectangle(40, 30, 230, 85, al_map_rgb(255, 255, 255), 3);
+                desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 137, 48, 2.2f, ALLEGRO_ALIGN_CENTRE, "MENU [ESC]");
 
-                al_draw_filled_rectangle(30, 100,1500, 240, al_map_rgba(15, 20, 28, 215));
-                al_draw_rectangle(30, 100, 1500, 240, al_map_rgb(240, 190, 40), 2);
+                char infoFase[128], infoCarga[128], infoTorque[128];
 
-                char infoFase[128], infoCarga[128];
-                snprintf(infoFase, sizeof(infoFase), "FASE %d / 5   |   FORMULA: M = F x d   (Equilibrio: Torque Esq = Torque Dir)", faseAtual + 1);
+                al_draw_filled_rectangle(40, 105, 230, 145, al_map_rgba(15, 20, 28, 215));
+                snprintf(infoFase, sizeof(infoFase), "FASE %d / 5)", faseAtual + 1);
+
+                snprintf(infoTorque, sizeof(infoTorque), "FORMULA: M = F x d\n(Equilibrio: Torque Esq = Torque Dir)", faseAtual + 1);
+                al_draw_filled_rectangle(1500, 600, 1850, 850, al_map_rgb(114, 47, 55));
+                al_draw_rectangle(1500, 600, 1850, 850, al_map_rgb(255, 255, 255), 3);
+
+                al_draw_filled_rectangle(40, 155, 1230, 215, al_map_rgba(15, 20, 28, 215));
                 snprintf(infoCarga, sizeof(infoCarga), "CARGA NA LANCA (Direita): Forca F = %d  |  Distancia d = %d",
                     fases[faseAtual].valorCarga, fases[faseAtual].distanciaCarga);
 
-                desenhar_texto_escalado(fonte, al_map_rgb(240, 190, 40), 50, 118, 2.0f, ALLEGRO_ALIGN_LEFT, infoFase);
-                desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 50, 155, 2.2f, ALLEGRO_ALIGN_LEFT, infoCarga);
+                desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 50, 118, 2.0f, ALLEGRO_ALIGN_LEFT, infoFase);
+                desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 50, 160, 2.2f, ALLEGRO_ALIGN_LEFT, infoCarga);
+                desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 1510, 610, 2.2f, ALLEGRO_ALIGN_LEFT, infoTorque);
                 desenhar_texto_escalado(fonte, al_map_rgb(180, 220, 250), 50, 195, 2.0f, ALLEGRO_ALIGN_LEFT, "Arraste os contrapesos para as posicoes 1 a 10 da contralanca e confirme!");
 
                 float proporcaoTempo = (float)(tempoRestante / fases[faseAtual].tempoLimite);

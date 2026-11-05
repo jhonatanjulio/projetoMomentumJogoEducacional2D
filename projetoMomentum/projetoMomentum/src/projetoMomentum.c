@@ -871,12 +871,13 @@ int main() {
                 al_draw_rectangle(40, 30, 230, 85, al_map_rgb(255, 255, 255), 3);
                 desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 137, 48, 2.2f, ALLEGRO_ALIGN_CENTRE, "MENU [ESC]");
 
-                char infoFase[128], infoCarga[128], infoTorque[128];
+                char infoFase[128], infoCarga[128], calTorque[128], infoTorque[128];
 
                 al_draw_filled_rectangle(40, 105, 230, 145, al_map_rgba(15, 20, 28, 215));
-                snprintf(infoFase, sizeof(infoFase), "FASE %d / 5)", faseAtual + 1);
+                snprintf(infoFase, sizeof(infoFase), "FASE %d / 5", faseAtual + 1);
 
-                snprintf(infoTorque, sizeof(infoTorque), "FORMULA: M = F x d(Equilibrio: Torque Esq = Torque Dir)", faseAtual + 1);
+                snprintf(calTorque, sizeof(calTorque), "FORMULA: M = F x d");
+                snprintf(infoTorque, sizeof(infoTorque), "(Equilibrio: Torque Esq = Torque Dir)");
                 al_draw_filled_rectangle(1500, 600, 1850, 850, al_map_rgb(114, 47, 55));
                 al_draw_rectangle(1500, 600, 1850, 850, al_map_rgb(255, 255, 255), 3);
 
@@ -886,7 +887,8 @@ int main() {
 
                 desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 50, 118, 2.0f, ALLEGRO_ALIGN_LEFT, infoFase);
                 desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 50, 160, 2.2f, ALLEGRO_ALIGN_LEFT, infoCarga);
-                desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 1510, 610, 2.2f, ALLEGRO_ALIGN_LEFT, infoTorque);
+                desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 1510, 610, 2.2f, ALLEGRO_ALIGN_LEFT, calTorque);
+                desenhar_texto_escalado(fonte, al_map_rgb(180, 220, 250), 1510, 635, 1.1f, ALLEGRO_ALIGN_LEFT, infoTorque);
                 desenhar_texto_escalado(fonte, al_map_rgb(180, 220, 250), 50, 195, 2.0f, ALLEGRO_ALIGN_LEFT, "Arraste os contrapesos para as posicoes 1 a 10 da contralanca e confirme!");
 
                 float proporcaoTempo = (float)(tempoRestante / fases[faseAtual].tempoLimite);
@@ -943,14 +945,14 @@ int main() {
 
                 // ==================== BOTÃO CONFIRMAR / REFAZER ====================
                 if (estadoFase == 0) {
-                    al_draw_filled_rectangle(1520, 890, 1870, 970, al_map_rgb(45, 160, 70));
-                    al_draw_rectangle(1520, 890, 1870, 970, al_map_rgb(255, 255, 255), 3);
-                    desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 1695, 920, 2.5f, ALLEGRO_ALIGN_CENTRE, "CONFIRMAR [ESPACO]");
+                    al_draw_filled_rectangle(1500, 890, 1850, 970, al_map_rgb(45, 160, 70));
+                    al_draw_rectangle(1500, 890, 1850, 970, al_map_rgb(255, 255, 255), 3);
+                    desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 1675, 920, 2.2f, ALLEGRO_ALIGN_CENTRE, "CONFIRMAR [ESPACO]");
                 }
                 else if (estadoFase == 3) {
-                    al_draw_filled_rectangle(1520, 890, 1870, 970, al_map_rgb(210, 65, 50));
-                    al_draw_rectangle(1520, 890, 1870, 970, al_map_rgb(255, 255, 255), 3);
-                    desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 1695, 920, 2.5f, ALLEGRO_ALIGN_CENTRE, "REFAZER [ESPACO]");
+                    al_draw_filled_rectangle(1500, 890, 1850, 970, al_map_rgb(210, 65, 50));
+                    al_draw_rectangle(1500, 890, 1850, 970, al_map_rgb(255, 255, 255), 3);
+                    desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 1680, 920, 2.2f, ALLEGRO_ALIGN_CENTRE, "REFAZER [ESPACO]");
                 }
             }
 

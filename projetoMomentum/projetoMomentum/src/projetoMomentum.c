@@ -440,6 +440,7 @@ int main() {
     }
 
     ALLEGRO_BITMAP* cenario = al_load_bitmap("assets/cenario/cenario_temp.png");
+    ALLEGRO_BITMAP* cenariomenu = al_load_bitmap("assets/cenario/cenario_menu.png");
     ALLEGRO_BITMAP* grua = al_load_bitmap("assets/sprites/grua_sem_elevador.png");
     ALLEGRO_BITMAP* elevador = al_load_bitmap("assets/sprites/elevador_grua_spritesheet.png");
 
@@ -756,13 +757,12 @@ int main() {
             al_clear_to_color(al_map_rgb(20, 24, 30));
 
             if (telaAtual == TELA_MENU) {
-                if (cenario) {
-                    al_draw_bitmap(cenario, 0, 0, 0);
+                if (cenariomenu) {
+                    al_draw_bitmap(cenariomenu, 0, 0, 0);
                 }
 
                 desenhar_texto_escalado(fonte, al_map_rgb(240, 190, 40), 960, 210, 4.5f, ALLEGRO_ALIGN_CENTRE, "EQUILIBRIO: TORQUE CHALLENGE");
                 desenhar_texto_escalado(fonte, al_map_rgb(220, 220, 220), 960, 290, 2.5f, ALLEGRO_ALIGN_CENTRE, "Equilibre a grua da obra calculando o Momento de uma Forca");
-                desenhar_texto_escalado(fonte, al_map_rgb(100, 220, 120), 960, 340, 3.0f, ALLEGRO_ALIGN_CENTRE, "Formula: M = F x d   |   Equilibrio: Sigma M = 0");
 
                 // Botão JOGAR
                 al_draw_filled_rectangle(760, 420, 1160, 500, al_map_rgb(114, 47, 55));
@@ -779,16 +779,16 @@ int main() {
                 al_draw_rectangle(760, 640, 1160, 720, al_map_rgb(255, 255, 255), 3);
                 desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 960, 668, 3.0f, ALLEGRO_ALIGN_CENTRE, "SAIR");
 
-                desenhar_texto_escalado(fonte, al_map_rgb(180, 180, 180), 960, 775, 2.0f, ALLEGRO_ALIGN_CENTRE, "Use o MOUSE para jogar  |  [F11] Tela Cheia");
+                desenhar_texto_escalado(fonte, al_map_rgb(70, 90, 120), 960, 775, 2.0f, ALLEGRO_ALIGN_CENTRE, "Use o MOUSE para jogar  |  [F11] Tela Cheia");
             }
             else if (telaAtual == TELA_RECORDES) {
                 if (cenario) {
                     al_draw_bitmap(cenario, 0, 0, 0);
                 }
-                al_draw_filled_rectangle(460, 180, 1460, 820, al_map_rgba(15, 20, 28, 235));
-                al_draw_rectangle(460, 180, 1460, 820, al_map_rgb(240, 190, 40), 4);
+                al_draw_filled_rectangle(400, 180, 1520, 820, al_map_rgba(15, 20, 28, 235));
+                al_draw_rectangle(400, 180, 1520, 820, al_map_rgb(255, 255, 255), 4);
 
-                desenhar_texto_escalado(fonte, al_map_rgb(240, 190, 40), 960, 240, 4.0f, ALLEGRO_ALIGN_CENTRE, "RECORDE DA OBRA");
+                desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 960, 240, 4.0f, ALLEGRO_ALIGN_CENTRE, "RECORDE DA OBRA");
 
                 char textoRecorde[128];
                 snprintf(textoRecorde, sizeof(textoRecorde), "MAIOR PONTUACAO TOTAL: %.2f pts", recorde);
@@ -797,7 +797,7 @@ int main() {
                 desenhar_texto_escalado(fonte, al_map_rgb(180, 210, 240), 960, 480, 2.5f, ALLEGRO_ALIGN_CENTRE, "Regra de Pontuacao: Pontos = 1000 x (1 / Tempo Gasto)");
                 desenhar_texto_escalado(fonte, al_map_rgb(180, 210, 240), 960, 530, 2.2f, ALLEGRO_ALIGN_CENTRE, "Quanto mais rapido equilibrar as 5 fases, maior a nota!");
 
-                al_draw_filled_rectangle(760, 650, 1160, 730, al_map_rgb(70, 90, 120));
+                al_draw_filled_rectangle(760, 650, 1160, 730, al_map_rgb(114, 47, 55));
                 al_draw_rectangle(760, 650, 1160, 730, al_map_rgb(255, 255, 255), 3);
                 desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 960, 678, 3.0f, ALLEGRO_ALIGN_CENTRE, "VOLTAR AO MENU");
             }
@@ -805,8 +805,8 @@ int main() {
                 if (cenario) {
                     al_draw_bitmap(cenario, 0, 0, 0);
                 }
-                al_draw_filled_rectangle(440, 180, 1480, 820, al_map_rgba(15, 25, 20, 235));
-                al_draw_rectangle(440, 180, 1480, 820, al_map_rgb(60, 200, 90), 4);
+                al_draw_filled_rectangle(400, 180, 1520, 820, al_map_rgba(15, 25, 20, 235));
+                al_draw_rectangle(400, 180, 1520, 820, al_map_rgb(60, 200, 90), 4);
 
                 desenhar_texto_escalado(fonte, al_map_rgb(80, 230, 110), 960, 240, 4.0f, ALLEGRO_ALIGN_CENTRE, "OBRA CONCLUIDA COM SUCESSO!");
                 desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 960, 320, 2.5f, ALLEGRO_ALIGN_CENTRE, "Voce equilibrou todas as 5 fases do desafio de torque!");
@@ -814,7 +814,7 @@ int main() {
                 char bufFinal[128], bufRec[128];
                 snprintf(bufFinal, sizeof(bufFinal), "Sua Pontuacao Final: %.2f pts", ultimaPontuacaoFinal);
                 snprintf(bufRec, sizeof(bufRec), "Recorde Registrado : %.2f pts", recorde);
-                desenhar_texto_escalado(fonte, al_map_rgb(240, 190, 40), 960, 400, 3.2f, ALLEGRO_ALIGN_CENTRE, bufFinal);
+                desenhar_texto_escalado(fonte, al_map_rgb(80, 230, 110), 960, 400, 3.2f, ALLEGRO_ALIGN_CENTRE, bufFinal);
                 desenhar_texto_escalado(fonte, al_map_rgb(200, 220, 255), 960, 460, 2.8f, ALLEGRO_ALIGN_CENTRE, bufRec);
 
                 al_draw_filled_rectangle(760, 540, 1160, 620, al_map_rgb(45, 160, 70));
@@ -866,29 +866,27 @@ int main() {
                     }
                 }
 
-                // ==================== HUD SUPERIOR ====================
+                // ==================== HUD ====================
                 al_draw_filled_rectangle(40, 30, 230, 85, al_map_rgba(114, 47, 55, 220));
                 al_draw_rectangle(40, 30, 230, 85, al_map_rgb(255, 255, 255), 3);
                 desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 137, 48, 2.2f, ALLEGRO_ALIGN_CENTRE, "MENU [ESC]");
 
-                char infoFase[128], infoCarga[128], calTorque[128], infoTorque[128];
+                char infoFase[128], infoCarga[128];
 
                 al_draw_filled_rectangle(40, 105, 230, 145, al_map_rgba(15, 20, 28, 215));
                 snprintf(infoFase, sizeof(infoFase), "FASE %d / 5", faseAtual + 1);
 
-                snprintf(calTorque, sizeof(calTorque), "FORMULA: M = F x d");
-                snprintf(infoTorque, sizeof(infoTorque), "(Equilibrio: Torque Esq = Torque Dir)");
                 al_draw_filled_rectangle(1500, 600, 1850, 850, al_map_rgb(114, 47, 55));
                 al_draw_rectangle(1500, 600, 1850, 850, al_map_rgb(255, 255, 255), 3);
 
                 al_draw_filled_rectangle(40, 155, 1230, 215, al_map_rgba(15, 20, 28, 215));
-                snprintf(infoCarga, sizeof(infoCarga), "CARGA NA LANCA (Direita): Forca F = %d  |  Distancia d = %d",
-                    fases[faseAtual].valorCarga, fases[faseAtual].distanciaCarga);
+                snprintf(infoCarga, sizeof(infoCarga), "CARGA NA LANCA (Direita): Forca F = %d  |  Distancia d = %d", fases[faseAtual].valorCarga, fases[faseAtual].distanciaCarga);
 
                 desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 50, 118, 2.0f, ALLEGRO_ALIGN_LEFT, infoFase);
                 desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 50, 160, 2.2f, ALLEGRO_ALIGN_LEFT, infoCarga);
-                desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 1510, 610, 2.2f, ALLEGRO_ALIGN_LEFT, calTorque);
-                desenhar_texto_escalado(fonte, al_map_rgb(180, 220, 250), 1510, 635, 1.1f, ALLEGRO_ALIGN_LEFT, infoTorque);
+                desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 255), 1510, 610, 2.2f, ALLEGRO_ALIGN_LEFT, "FORMULA: M = F x d");
+                desenhar_texto_escalado(fonte, al_map_rgb(180, 220, 250), 1510, 635, 1.1f, ALLEGRO_ALIGN_LEFT, "Equilibrio: Torque Esq = Torque Dir");
+                desenhar_texto_escalado(fonte, al_map_rgb(180, 220, 250), 1510, 655, 1.1f, ALLEGRO_ALIGN_LEFT, "Equilibrio: Sigma M = 0");
                 desenhar_texto_escalado(fonte, al_map_rgb(180, 220, 250), 50, 195, 2.0f, ALLEGRO_ALIGN_LEFT, "Arraste os contrapesos para as posicoes 1 a 10 da contralanca e confirme!");
 
                 float proporcaoTempo = (float)(tempoRestante / fases[faseAtual].tempoLimite);
@@ -915,32 +913,29 @@ int main() {
 
                 // ==================== PAINEL DE EXPRESSÃO COMPLETA DO TORQUE (PÓS-CONFIRMAÇÃO) ====================
                 if (estadoFase == 1 || estadoFase == 3) {
-                    al_draw_filled_rectangle(490, 125, 1430, 315, al_map_rgba(15, 20, 28, 240));
+                    al_draw_filled_rectangle(410, 305, 1510, 535, al_map_rgba(15, 20, 28, 240));
                     ALLEGRO_COLOR corBorda = (estadoFase == 1) ? al_map_rgb(60, 210, 90) : al_map_rgb(230, 60, 50);
-                    al_draw_rectangle(490, 125, 1430, 315, corBorda, 3);
+                    al_draw_rectangle(410, 305, 1510, 535, corBorda, 3);
 
-                    char lin1[128], lin2[160], lin3[128], lin4[128];
+                    char lin1[128], lin2[128], lin3[128], lin4[128];
                     snprintf(lin1, sizeof(lin1), "CALCULO DETALHADO DO TORQUE (M = F x d):");
                     snprintf(lin2, sizeof(lin2), "Contralanca (Esq): %s", expressaoTorqueEsq);
-                    snprintf(lin3, sizeof(lin3), "Lanca (Dir)      : %dx%d = %.0f",
-                        fases[faseAtual].valorCarga, fases[faseAtual].distanciaCarga, ultimoTorqueDir);
+                    snprintf(lin3, sizeof(lin3), "Lanca (Dir)      : %dx%d = %.0f", fases[faseAtual].valorCarga, fases[faseAtual].distanciaCarga, ultimoTorqueDir);
 
                     if (estadoFase == 1) {
-                        snprintf(lin4, sizeof(lin4), "Sigma M = %.0f - %.0f = 0  ->  EQUILIBRIO! (+%.1f pts)",
-                            ultimoTorqueEsq, ultimoTorqueDir, pontuacaoFase);
+                        snprintf(lin4, sizeof(lin4), "Sigma M = %.0f - %.0f = 0  ->  EQUILIBRIO! (+%.1f pts)", ultimoTorqueEsq, ultimoTorqueDir, pontuacaoFase);
                     }
                     else if (tempoEsgotado) {
                         snprintf(lin4, sizeof(lin4), "TEMPO ESGOTADO! Sigma M = %.0f -> GRUA TOMBOU!", ultimoSigmaM);
                     }
                     else {
-                        snprintf(lin4, sizeof(lin4), "Sigma M = %.0f - %.0f = %.0f  ->  DESEQUILIBRIO (GRUA TOMBOU!)",
-                            ultimoTorqueEsq, ultimoTorqueDir, ultimoSigmaM);
+                        snprintf(lin4, sizeof(lin4), "Sigma M = %.0f - %.0f = %.0f  ->  DESEQUILIBRIO (GRUA TOMBOU!)", ultimoTorqueEsq, ultimoTorqueDir, ultimoSigmaM);
                     }
 
-                    desenhar_texto_escalado(fonte, al_map_rgb(240, 190, 40), 960, 142, 2.3f, ALLEGRO_ALIGN_CENTRE, lin1);
-                    desenhar_texto_escalado(fonte, al_map_rgb(180, 235, 255), 960, 182, 2.2f, ALLEGRO_ALIGN_CENTRE, lin2);
-                    desenhar_texto_escalado(fonte, al_map_rgb(255, 220, 180), 960, 218, 2.2f, ALLEGRO_ALIGN_CENTRE, lin3);
-                    desenhar_texto_escalado(fonte, corBorda, 960, 265, 2.3f, ALLEGRO_ALIGN_CENTRE, lin4);
+                    desenhar_texto_escalado(fonte, al_map_rgb(220, 220, 220), 960, 342, 2.3f, ALLEGRO_ALIGN_CENTRE, lin1);
+                    desenhar_texto_escalado(fonte, al_map_rgb(220, 220, 220), 960, 382, 2.2f, ALLEGRO_ALIGN_CENTRE, lin2);
+                    desenhar_texto_escalado(fonte, al_map_rgb(220, 220, 220), 960, 418, 2.2f, ALLEGRO_ALIGN_CENTRE, lin3);
+                    desenhar_texto_escalado(fonte, corBorda, 960, 465, 2.3f, ALLEGRO_ALIGN_CENTRE, lin4);
                 }
 
                 // ==================== BOTÃO CONFIRMAR / REFAZER ====================

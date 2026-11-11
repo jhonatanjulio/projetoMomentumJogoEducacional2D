@@ -83,13 +83,13 @@ double ultimoTorqueDir = 0.0;
 double ultimoSigmaM = 0.0;
 char expressaoTorqueEsq[128] = "";
 
-// Dados das 5 fases (projetadas para 10 posições)
+// Dados das 5 fases (projetadas para 13 posições)
 Fases fases[5] = {
-    { 1, 10, 1,{ 5, 10 },           2,  45.0f }, // M = 10  -> 10 na pos. 1, ou 5 na pos. 2
-    { 1, 20, 3,{ 5, 10 },           2,  60.0f }, // M = 60  -> 10 na pos. 6
-    { 2, 30, 4,{ 3, 5, 10 },        3,  75.0f }, // M = 120 -> 10 na pos. 10 + 5 na pos. 4
-    { 3, 30, 5,{ 3, 5, 10 },        3,  90.0f }, // M = 150 -> 10 na pos. 10 + 5 na pos. 7 + 3 na pos. 5
-    { 3, 20, 9,{ 1, 2, 3, 5, 10 },  5, 120.0f }  // M = 180 -> 10 na 10 + 5 na 9 + 3 na 8 + 2 na 5 + 1 na 1
+    { 1, 10, 4,{ 5, 10 },           2,  45.0f }, // M = 40
+    { 1, 20, 6,{ 5, 10 },           2,  60.0f }, // M = 120
+    { 2, 20, 8,{ 3, 5, 10 },        3,  75.0f }, // M = 160
+    { 3, 30, 7,{2, 5, 10 },         3,  90.0f }, // M = 210
+    { 3, 30, 8,{ 1, 2, 3, 5, 10},   5, 120.0f }  // M = 240
 };
 
 int faseAtual = 0; // índice da fase em jogo (0 = primeira fase)
@@ -159,7 +159,7 @@ bool validar_fases(Pesos cargas[], int totalCargas) {
     bool tudoCerto = true;
 
     for (int i = 0; i < 5; i++) {
-        if (fases[i].distanciaCarga < 1 || fases[i].distanciaCarga > 10) {
+        if (fases[i].distanciaCarga < 1 || fases[i].distanciaCarga > 13) {
             printf("Fase %d: distancia da carga (%d) fora de 1 a 10.\n", i + 1, fases[i].distanciaCarga);
             tudoCerto = false;
         }
@@ -186,7 +186,7 @@ int calcular_torque(Coordenadas slots[], int totalSlots, int pesoCarga, int dist
     // Percorre os slots da contralança, soma o torque e monta a expressão (ex: 10x6 + 5x4 = 80)
     for (int i = 0; i < totalSlots; i++) {
         if (slots[i].ocupado) {
-            int distancia = totalSlots - i; // Posição física de 1 a 10 a partir do mastro
+            int distancia = totalSlots - i; // Posição física de 1 a 13 a partir do mastro
             torqueContraLanca += (double)slots[i].pesoOcupante * distancia;
 
             char termo[32];
@@ -298,7 +298,7 @@ void acionar_confirmar_ou_reset(Pesos peso[], Coordenadas slotsContraLanca[], in
         cronometroAtivo = false;
         tempoGasto = al_get_time() - inicioFase;
 
-        equilibrio = calcular_torque(slotsContraLanca, 10,
+        equilibrio = calcular_torque(slotsContraLanca, 13,
             fases[faseAtual].valorCarga, fases[faseAtual].distanciaCarga);
 
         if (equilibrio == 1) {
@@ -332,7 +332,7 @@ void acionar_confirmar_ou_reset(Pesos peso[], Coordenadas slotsContraLanca[], in
     else if (estadoFase == 3) {
         // Reset imediato se estiver caindo ou caída (RN04)
         *indice_arrastado = -1;
-        carregar_fase(faseAtual, peso, 5, slotsContraLanca, 10);
+        carregar_fase(faseAtual, peso, 5, slotsContraLanca, 13);
     }
 }
 
@@ -388,54 +388,63 @@ int main() {
         return -1;
     }
 
-    Coordenadas slotsContraLanca[10];
-    slotsContraLanca[0].comecoX = 555; slotsContraLanca[0].fimX = 580;
-    slotsContraLanca[1].comecoX = 585; slotsContraLanca[1].fimX = 610;
-    slotsContraLanca[2].comecoX = 615; slotsContraLanca[2].fimX = 640;
-    slotsContraLanca[3].comecoX = 645; slotsContraLanca[3].fimX = 670;
-    slotsContraLanca[4].comecoX = 675; slotsContraLanca[4].fimX = 700;
-    slotsContraLanca[5].comecoX = 705; slotsContraLanca[5].fimX = 730;
-    slotsContraLanca[6].comecoX = 735; slotsContraLanca[6].fimX = 760;
-    slotsContraLanca[7].comecoX = 765; slotsContraLanca[7].fimX = 790;
-    slotsContraLanca[8].comecoX = 795; slotsContraLanca[8].fimX = 820;
-    slotsContraLanca[9].comecoX = 825; slotsContraLanca[9].fimX = 850;
+    Coordenadas slotsContraLanca[13];
+    slotsContraLanca[0].comecoX = 465; slotsContraLanca[0].fimX = 490;
+    slotsContraLanca[1].comecoX = 495; slotsContraLanca[1].fimX = 520;
+    slotsContraLanca[2].comecoX = 525; slotsContraLanca[2].fimX = 550;
+    slotsContraLanca[3].comecoX = 555; slotsContraLanca[3].fimX = 580;
+    slotsContraLanca[4].comecoX = 585; slotsContraLanca[4].fimX = 610;
+    slotsContraLanca[5].comecoX = 615; slotsContraLanca[5].fimX = 640;
+    slotsContraLanca[6].comecoX = 645; slotsContraLanca[6].fimX = 670;
+    slotsContraLanca[7].comecoX = 675; slotsContraLanca[7].fimX = 700;
+    slotsContraLanca[8].comecoX = 705; slotsContraLanca[8].fimX = 730;
+    slotsContraLanca[9].comecoX = 735; slotsContraLanca[9].fimX = 760;
+    slotsContraLanca[10].comecoX = 765; slotsContraLanca[10].fimX = 790;
+    slotsContraLanca[11].comecoX = 795; slotsContraLanca[11].fimX = 820;
+    slotsContraLanca[12].comecoX = 825; slotsContraLanca[12].fimX = 850;
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 13; i++) {
         slotsContraLanca[i].comecoY = 352.5f;
         slotsContraLanca[i].fimY = 398.5f;
         slotsContraLanca[i].ocupado = false;
         slotsContraLanca[i].pesoOcupante = 0;
     }
 
-    Coordenadas slotsLanca[10];
-    slotsLanca[0].comecoX = 782;
-    slotsLanca[1].comecoX = 812;
-    slotsLanca[2].comecoX = 842;
-    slotsLanca[3].comecoX = 872;
-    slotsLanca[4].comecoX = 902;
-    slotsLanca[5].comecoX = 932;
-    slotsLanca[6].comecoX = 962;
-    slotsLanca[7].comecoX = 992;
-    slotsLanca[8].comecoX = 1022;
-    slotsLanca[9].comecoX = 1052;
+    Coordenadas slotsLanca[13];
+    slotsLanca[0].comecoX = 692;
+    slotsLanca[1].comecoX = 722;
+    slotsLanca[2].comecoX = 752;
+    slotsLanca[3].comecoX = 782;
+    slotsLanca[4].comecoX = 812;
+    slotsLanca[5].comecoX = 842;
+    slotsLanca[6].comecoX = 872;
+    slotsLanca[7].comecoX = 902;
+    slotsLanca[8].comecoX = 932;
+    slotsLanca[9].comecoX = 962;
+    slotsLanca[10].comecoX = 992;
+    slotsLanca[11].comecoX = 1022;
+    slotsLanca[12].comecoX = 1052;
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 13; i++) {
         slotsLanca[i].comecoY = 371;
     }
 
-    Coordenadas slotsCarga[10];
-    slotsCarga[0].comecoX = 1042;
-    slotsCarga[1].comecoX = 1072;
-    slotsCarga[2].comecoX = 1102;
-    slotsCarga[3].comecoX = 1132;
-    slotsCarga[4].comecoX = 1162;
-    slotsCarga[5].comecoX = 1192;
-    slotsCarga[6].comecoX = 1222;
-    slotsCarga[7].comecoX = 1252;
-    slotsCarga[8].comecoX = 1282;
-    slotsCarga[9].comecoX = 1312;
+    Coordenadas slotsCarga[13];
+    slotsCarga[0].comecoX = 952;
+    slotsCarga[1].comecoX = 982;
+    slotsCarga[2].comecoX = 1012;
+    slotsCarga[3].comecoX = 1042;
+    slotsCarga[4].comecoX = 1072;
+    slotsCarga[5].comecoX = 1102;
+    slotsCarga[6].comecoX = 1132;
+    slotsCarga[7].comecoX = 1162;
+    slotsCarga[8].comecoX = 1192;
+    slotsCarga[9].comecoX = 1222;
+    slotsCarga[10].comecoX = 1252;
+    slotsCarga[11].comecoX = 1282;
+    slotsCarga[12].comecoX = 1312;
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 13; i++) {
         slotsCarga[i].comecoY = 868;
     }
 
@@ -727,7 +736,7 @@ int main() {
             if (telaAtual == TELA_JOGO && indice_arrastado != -1) {
                 bool foiPosicionado = false;
 
-                for (int i = 0; i < 10; i++) {
+                for (int i = 0; i < 13; i++) {
                     if (ponto_no_retangulo((float)evento.mouse.x, (float)evento.mouse.y,
                         slotsContraLanca[i].comecoX, slotsContraLanca[i].comecoY,
                         slotsContraLanca[i].fimX, slotsContraLanca[i].fimY) &&
@@ -848,17 +857,17 @@ int main() {
                             peso[i].destinoX, peso[i].destinoY,
                             peso[i].destinoW, peso[i].destinoH, 0);
 
-                        char txtPeso[16];
+                        /*char txtPeso[16];
                         snprintf(txtPeso, sizeof(txtPeso), "F=%d", peso[i].carga);
                         desenhar_texto_escalado(fonte, al_map_rgb(255, 255, 100),
-                            peso[i].destinoX + 40, peso[i].destinoY + 84, 2.0f, ALLEGRO_ALIGN_CENTRE, txtPeso);
+                            peso[i].destinoX + 40, peso[i].destinoY + 84, 2.0f, ALLEGRO_ALIGN_CENTRE, txtPeso);*/
                     }
 
-                    for (int i = 0; i < 10; i++) {
+                    for (int i = 0; i < 13; i++) {
                         al_draw_rectangle(slotsContraLanca[i].comecoX, slotsContraLanca[i].comecoY,
                             slotsContraLanca[i].fimX, slotsContraLanca[i].fimY, al_map_rgb(30, 30, 30), 2);
 
-                        int distSlot = 10 - i;
+                        int distSlot = 13 - i;
                         char txtDist[8];
                         snprintf(txtDist, sizeof(txtDist), "%d", distSlot);
                         float centroSlotX = (slotsContraLanca[i].comecoX + slotsContraLanca[i].fimX) / 2.0f;
